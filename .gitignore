@@ -1,0 +1,5 @@
+.idea
+useful.txt
+venv
+__pycache__
+.env
