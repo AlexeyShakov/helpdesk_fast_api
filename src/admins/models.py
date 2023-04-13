@@ -1,6 +1,5 @@
-from src.database import Base
-from sqlalchemy import Integer, Column, String, Table
-from src.database import metadata
+from database import Base, metadata
+from sqlalchemy import Integer, Column, String
 
 
 class Section(Base):
