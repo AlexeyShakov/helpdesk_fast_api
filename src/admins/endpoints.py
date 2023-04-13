@@ -20,5 +20,3 @@ async def create_section(section_object: SectionSchemaCreate, session: AsyncSess
     await session.refresh(section)
     return section
 
-
-
