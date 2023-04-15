@@ -10,4 +10,11 @@ class SectionSchemaReturn(SectionSchemaCreate):
     class Config:
         orm_mode = True
 
+class Kek(BaseModel):
+    name: str
+    id: int
+
+    class Config:
+        orm_mode = True
+
 
