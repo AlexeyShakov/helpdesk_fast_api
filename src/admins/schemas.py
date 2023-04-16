@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class SectionSchemaCreate(BaseModel):
@@ -10,11 +11,5 @@ class SectionSchemaReturn(SectionSchemaCreate):
     class Config:
         orm_mode = True
 
-class Kek(BaseModel):
-    name: str
-    id: int
-
-    class Config:
-        orm_mode = True
 
 
