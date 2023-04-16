@@ -6,6 +6,6 @@ class Section(Base):
     __tablename__ = "sections"
     id = Column(Integer, primary_key=True)
     name = Column("name", String(100), nullable=False)
-    label = Column("label", String(100), nullable=True)
+
 
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from .schemas import SectionSchemaCreate, SectionSchemaReturn, SectionOptional, SectionSchemaKek
+from .schemas import SectionSchemaCreate, SectionSchemaReturn
 from .crud import create, get_list, get_object, delete_object, update_object_put
 from sqlalchemy.ext.asyncio import AsyncSession
 from admins.models import Section
@@ -30,9 +30,3 @@ async def delete_section(section_id: int, session: AsyncSession = Depends(get_as
 @router.put("/{section_id}", status_code=200, response_model=SectionSchemaReturn)
 async def update_put_section(section_id: int, section: SectionSchemaReturn, session: AsyncSession = Depends(get_async_session)):
     return await update_object_put(Section, session, section_id, section.dict())
-
-@router.patch("/{section_id}", status_code=200, response_model=SectionSchemaKek)
-async def update_patch_section(section_id: int, section: SectionOptional, session: AsyncSession = Depends(get_async_session)):
-    print("Я тут")
-    print("data",  section.dict(exclude_unset=True))
-    return await update_object_put(Section, session, section_id, section.dict(exclude_unset=True))
