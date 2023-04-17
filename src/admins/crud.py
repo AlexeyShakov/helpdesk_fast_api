@@ -6,8 +6,6 @@ from typing import Sequence
 from sqlalchemy import update
 
 async def create(model: Base, session: AsyncSession, data: dict) -> Base:
-    await session.commit()
-    await session.close()
     obj = model(**data)
     session.add(obj)
     await session.commit()
