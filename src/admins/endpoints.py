@@ -33,7 +33,7 @@ async def read_section(section_id: int, session: AsyncSession = Depends(get_asyn
 async def delete_section(section_id: int, session: AsyncSession = Depends(get_async_session)):
     return await delete_object(Section, session, section_id)
 
-@router_section.put("/{section_id}", status_code=200, response_model=SectionSchemaReturn)
+@router_section.put("/{section_id}", response_model=SectionSchemaReturn, status_code=200)
 async def update_put_section(section_id: int, section: SectionSchemaReturn, session: AsyncSession = Depends(get_async_session)):
     return await update_object_put(Section, session, section_id, section.dict())
 
@@ -44,3 +44,21 @@ async def create_topic(topic_object: TopicCreate, session: AsyncSession = Depend
     obj = await get_obj(Section, session, topic_dict.get("section").get("id"))
     topic_dict["section"] = obj
     return await create(Topic, session, topic_dict)
+
+@router_topic.get("/", response_model=List[TopicReturn], status_code=200)
+async def read_topics(session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
+    return await get_list(Topic, session, offset, limit)
+@router_topic.get("/{topic_id}", response_model=TopicReturn, status_code=200)
+async def read_topic(topic_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await get_object(Topic, session, topic_id)
+
+@router_topic.delete("/{topic_id}", status_code=204)
+async def delete_topic(topic_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await delete_object(Topic, session, topic_id)
+
+@router_topic.put("/{topic_id}", response_model=TopicReturn, status_code=200,)
+async def update_put_topic(topic_id: int, topic: TopicReturn,session: AsyncSession = Depends(get_async_session)):
+    topic_dict = topic.dict()
+    section_data = topic_dict.pop("section")
+    fk_obj = {"section_id": section_data["id"]}
+    return await update_object_put(Topic, session, topic_id, topic_dict, fk_obj, True)

@@ -27,9 +27,12 @@ async def delete_object(model: Base, session: AsyncSession, id: int) -> Base:
     await session.delete(obj)
     await session.commit()
 
-async def update_object_put(model: Base, session: AsyncSession, id: int, data: dict) -> Base:
+async def update_object_put(model: Base, session: AsyncSession, id: int, data: dict, fk_obj: dict, update_fk: bool = False) -> Base:
     data.pop("id")
     obj = await get_obj(model, session, id)
+    if update_fk:
+        for k, v in fk_obj.items():
+            setattr(obj, k, v)
     stmt = update(model).where(model.id == id).values(**data).execution_options(synchronize_session="fetch")
     await session.execute(stmt)
     await session.commit()

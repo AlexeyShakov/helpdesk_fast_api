@@ -16,7 +16,7 @@ class Topic(Base):
     name = Column("name", String(100), nullable=False)
     section_id = Column(Integer, ForeignKey("sections.id"))
 
-    section = relationship("Section", back_populates="topics")
+    section = relationship("Section", back_populates="topics", lazy="joined")
 
 
 
