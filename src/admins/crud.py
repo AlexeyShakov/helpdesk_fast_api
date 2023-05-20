@@ -1,3 +1,4 @@
+from admins.models import TemplateField
 from admins.utils import get_obj
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     return obj
 
 
-async def get_list(model: Base, session: AsyncSession, offset: int, limit: int) -> Sequence:
+async def get_list(model: Base, session: AsyncSession, offset: int = 0, limit: int = 2) -> Sequence:
     query = select(model).offset(offset).limit(limit)
     result = await session.execute(query)
     return result.scalars().all()
@@ -57,6 +58,13 @@ async def update_object_put(model: Base,
     await session.commit()
     await session.refresh(obj)
     return obj
+
+
+async def get_fields_by_template(session: AsyncSession, template_id: int):
+    query = select(TemplateField).where(TemplateField.template_id == template_id)
+    result = await session.execute(query)
+    objs = result.scalars().all()
+    return objs
 
 
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from .schemas import TopicSchemaReturn, TopicSchemaCreate, CategorySchemaReturn, CategorySchemaCreate, \
     TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate
-from .crud import create, get_list, get_object, delete_object, update_object_put
+from .crud import create, get_list, get_object, delete_object, update_object_put, get_fields_by_template
 from sqlalchemy.ext.asyncio import AsyncSession
 from admins.models import Topic, Category, TemplateField, Template
 from typing import List
@@ -50,7 +50,7 @@ async def delete_topic(topic_id: int, session: AsyncSession = Depends(get_async_
     return await delete_object(Topic, session, topic_id)
 
 @router_topic.put("/{topic_id}", response_model=TopicSchemaReturn, status_code=200)
-async def update_put_section(topic_id: int, topic: TopicSchemaReturn, session: AsyncSession = Depends(get_async_session)):
+async def update_put_topic(topic_id: int, topic: TopicSchemaReturn, session: AsyncSession = Depends(get_async_session)):
     return await update_object_put(Topic, session, topic_id, topic.dict())
 
 # Category endpoints
@@ -100,8 +100,12 @@ async def delete_category(template_id: int, session: AsyncSession = Depends(get_
 
 
 @router_template.put("/{template_id}", response_model=TemplateSchemaReturn, status_code=200)
-async def update_put_section(template_id: int, template: TemplateSchemaReturn, session: AsyncSession = Depends(get_async_session)):
+async def update_put_topic(template_id: int, template: TemplateSchemaReturn, session: AsyncSession = Depends(get_async_session)):
     return await update_object_put(Template, session, template_id, template.dict())
+
+@router_template.get("/{template_id}/template_fields", response_model=List[TemplateFieldSchemaReturn], status_code=200)
+async def get_field_by_template(template_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await get_fields_by_template(session, template_id)
 
 
 # TemplateField endpoints
