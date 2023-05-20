@@ -15,6 +15,16 @@ class TopicSchemaReturn(TopicSchemaCreate):
         orm_mode = True
 
 
+class TemplateSchemaCreate(BaseModel):
+    name: str
+
+
+class TemplateSchemaReturn(TemplateSchemaCreate):
+    id: int
+    # Нужно еще как-то возвращать все TemplateField, связанные с Template
+    class Config:
+        orm_mode = True
+
 class CategorySchemaCreate(BaseModel):
     name: str
     topic: TopicSchemaReturn
@@ -36,6 +46,7 @@ class TemplateFieldSchemaCreate(BaseModel):
     required: bool
     type: TemplateFieldChoices
     data: Optional[dict] = None
+    template: TemplateSchemaReturn
 
     @validator("data")
     def validate_data(cls, value: Optional[dict], values: dict):

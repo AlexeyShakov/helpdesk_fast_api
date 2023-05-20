@@ -26,16 +26,12 @@ class Category(Base):
     topic = relationship("Topic", back_populates="categories", lazy="joined")
 
 
-"""
-У одного шаблона может быть несколько полей. Следовательно, в объекте поля мы должны сделать ссылку на объект шаблона
-"""
-
 class Template(Base):
     __tablename__ = "templates"
     id = Column(Integer, primary_key=True)
     name = Column("name", String(100), nullable=False)
 
-    # template_fields = relationship("TemplateField", back_populates="template")
+    template_fields = relationship("TemplateField", cascade="all,delete", back_populates="template")
 
 
 class TemplateField(Base):
@@ -46,7 +42,7 @@ class TemplateField(Base):
     required = Column("required", Boolean, nullable=False)
     type = Column(Enum(TemplateFieldChoices), nullable=False)
     data = Column(JSON, nullable=True)
-    # template_id = Column(Integer, ForeignKey("templates.id"))
-    #
-    # template = relationship("Template", back_populates="template_fields", lazy="joined")
+    template_id = Column(Integer, ForeignKey("templates.id"))
+
+    template = relationship("Template", back_populates="template_fields", lazy="joined")
 
