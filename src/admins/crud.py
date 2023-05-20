@@ -3,7 +3,8 @@ from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Sequence
-from sqlalchemy import update
+from sqlalchemy import update, exc
+from fastapi import  HTTPException
 
 async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     obj = model(**data)
@@ -24,10 +25,28 @@ async def get_object(model: Base, session: AsyncSession, id: int) -> Base:
 async def delete_object(model: Base, session: AsyncSession, id: int) -> Base:
     # Проверка на нахождения объекта по id
     obj = await get_obj(model, session, id)
-    await session.delete(obj)
-    await session.commit()
+    try:
+        await session.delete(obj)
+        await session.commit()
+    except exc.IntegrityError:
+        raise HTTPException(status_code=500, detail="This object has existing child objects. Deletion is not possible")
 
-async def update_object_put(model: Base, session: AsyncSession, id: int, data: dict, fk_obj: dict, update_fk: bool = False) -> Base:
+async def update_object_put(model: Base,
+                            session: AsyncSession,
+                            id: int,
+                            data: dict,
+                            fk_obj: dict = None,
+                            update_fk: bool = False) -> Base:
+    """
+
+    :param model:
+    :param session:
+    :param id:
+    :param data:
+    :param fk_obj: Объекты, связанные с обновяемым объектом связью foreign key
+    :param update_fk:
+    :return:
+    """
     data.pop("id")
     obj = await get_obj(model, session, id)
     if update_fk:
