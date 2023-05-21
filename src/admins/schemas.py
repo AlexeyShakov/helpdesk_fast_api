@@ -2,6 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ValidationError, validator
 
+from admins.enums import TypeChoices
 from admins.models import TemplateFieldChoices
 
 
@@ -25,9 +26,18 @@ class TemplateSchemaReturn(TemplateSchemaCreate):
     class Config:
         orm_mode = True
 
+
+class TimeSchema(BaseModel):
+    value: int
+    type: TypeChoices
+
+
 class CategorySchemaCreate(BaseModel):
     name: str
     topic: TopicSchemaReturn
+    template: Optional[TemplateSchemaReturn]
+    time_of_life: TimeSchema
+    notification_repeat: TimeSchema
 
 class CategorySchemaReturn(CategorySchemaCreate):
     id: int
@@ -54,7 +64,6 @@ class TemplateFieldSchemaCreate(BaseModel):
             raise ValueError("This field must not be {}")
         if values["type"] == TemplateFieldChoices.STRING:
             if value is not None:
-                print("Я тут")
                 raise ValueError("This field must be null")
         if values["type"] == TemplateFieldChoices.SELECT:
             SelectDataSchema(**value)

@@ -1,13 +1,7 @@
+from admins.enums import TemplateFieldChoices
 from database import Base, metadata
 from sqlalchemy import Integer, Column, String, ForeignKey, Boolean, Enum, JSON
 from sqlalchemy.orm import relationship
-from sqlalchemy_utils import ChoiceType
-import enum
-
-
-class TemplateFieldChoices(enum.Enum):
-    SELECT = "select"
-    STRING = "string"
 
 
 class Topic(Base):
@@ -17,21 +11,27 @@ class Topic(Base):
     # Для связи один ко многим
     categories = relationship("Category", back_populates="topic")
 
-class Category(Base):
-    __tablename__ = "categories"
-    id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
-    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
-
-    topic = relationship("Topic", back_populates="categories", lazy="joined")
-
 
 class Template(Base):
     __tablename__ = "templates"
     id = Column(Integer, primary_key=True)
     name = Column("name", String(100), nullable=False)
 
+    categories = relationship("Category", back_populates="template")
     template_fields = relationship("TemplateField", cascade="all,delete", back_populates="template")
+
+
+class Category(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True)
+    name = Column("name", String(100), nullable=False)
+    time_of_life = Column(JSON, nullable=False)
+    notification_repeat = Column(JSON, nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
+    template_id = Column(Integer, ForeignKey("templates.id"), nullable=True)
+
+    template = relationship("Template", back_populates="categories", lazy="joined")
+    topic = relationship("Topic", back_populates="categories", lazy="joined")
 
 
 class TemplateField(Base):

@@ -55,17 +55,20 @@ async def update_put_topic(topic_id: int, topic: TopicSchemaReturn, session: Asy
 
 # Category endpoints
 @router_category.post("/", response_model=CategorySchemaReturn, status_code=201)
-async def create_topic(category_object: CategorySchemaCreate, session: AsyncSession = Depends(get_async_session)):
+async def create_category(category_object: CategorySchemaCreate, session: AsyncSession = Depends(get_async_session)):
     category_dict = category_object.dict()
-    obj = await get_obj(Topic, session, category_dict.get("topic").get("id"))
-    category_dict["topic"] = obj
+    topic_obj = await get_obj(Topic, session, category_dict.get("topic").get("id"))
+    template_obj = await get_obj(Template, session, category_dict.get("template").get("id"))
+    category_dict["topic"] = topic_obj
+    category_dict["template"] = template_obj
     return await create(Category, session, category_dict)
 
 @router_category.get("/", response_model=List[CategorySchemaReturn], status_code=200)
 async def read_categories(session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
     return await get_list(Category, session, offset, limit)
+
 @router_category.get("/{category_id}", response_model=CategorySchemaReturn, status_code=200)
-async def read_topic(category_id: int, session: AsyncSession = Depends(get_async_session)):
+async def read_category(category_id: int, session: AsyncSession = Depends(get_async_session)):
     return await get_object(Category, session, category_id)
 
 @router_category.delete("/{category_id}", status_code=204)
@@ -76,7 +79,8 @@ async def delete_category(category_id: int, session: AsyncSession = Depends(get_
 async def update_put_category(category_id: int, category: CategorySchemaReturn,session: AsyncSession = Depends(get_async_session)):
     category_dict = category.dict()
     topic_data = category_dict.pop("topic")
-    fk_obj = {"topic_id": topic_data["id"]}
+    template_data = category_dict.pop("template")
+    fk_obj = {"topic_id": topic_data["id"], "template_id": template_data["id"]}
     return await update_object_put(Category, session, category_id, category_dict, fk_obj, True)
 
 # Template endpoints
