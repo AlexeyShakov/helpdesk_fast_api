@@ -46,3 +46,15 @@ class TemplateField(Base):
 
     template = relationship("Template", back_populates="template_fields", lazy="joined")
 
+
+class TemplateFieldAnswer(Base):
+    __tablename__ = "template_field_answers"
+    id = Column(Integer, primary_key=True)
+    label = Column(String(200), nullable=False)
+    value = Column(JSON)
+    template_field_id = Column(Integer, ForeignKey("template_fields.id"))
+
+    template_field = relationship("TemplateField", back_populates="template_field_answers", lazy="joined")
+
+
+

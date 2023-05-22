@@ -3,8 +3,9 @@ from typing import Optional
 from pydantic import BaseModel, ValidationError, validator
 
 from admins.enums import TypeChoices
-from admins.models import TemplateFieldChoices
-
+from admins.models import TemplateFieldChoices, TemplateField
+from admins.utils import get_obj
+from fastapi import HTTPException
 
 class TopicSchemaCreate(BaseModel):
     name: str
@@ -46,9 +47,14 @@ class CategorySchemaReturn(CategorySchemaCreate):
         orm_mode = True
 
 
-class SelectDataSchema(BaseModel):
+class NameSchema(BaseModel):
     name: str
+
+class SelectDataSchema(NameSchema):
     index: int
+
+
+
 
 class TemplateFieldSchemaCreate(BaseModel):
     queue_index: int
@@ -71,6 +77,32 @@ class TemplateFieldSchemaCreate(BaseModel):
 
 
 class TemplateFieldSchemaReturn(TemplateFieldSchemaCreate):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class TemplateFieldAnswerSchemaCreate(BaseModel):
+    template_field: TemplateFieldSchemaReturn
+    label: str
+    value: dict
+
+    @validator("value")
+    def validate_value(cls, value: Optional[dict], values: dict):
+        template_field: TemplateField = await get_obj(TemplateField, values["template"]["id"])
+        if template_field.type == TemplateFieldChoices.SELECT:
+            if template_field.required and not value:
+                raise HTTPException(status_code=400, detail={f"{values['label']}": "This field is required"})
+            SelectDataSchema(**value)
+        elif template_field.type == TemplateFieldChoices.STRING:
+            if template_field.required and value["name"] == "":
+                raise HTTPException(status_code=400, detail={f"{values['label']}": "This field is required"})
+            NameSchema(**value)
+        return value
+
+
+class TemplateFieldAnswerSchemaReturn(BaseModel):
     id: int
 
     class Config:

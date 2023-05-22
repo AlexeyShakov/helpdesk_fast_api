@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from .schemas import TopicSchemaReturn, TopicSchemaCreate, CategorySchemaReturn, CategorySchemaCreate, \
-    TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate
+    TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate, \
+    TemplateFieldAnswerSchemaReturn, TemplateFieldAnswerSchemaCreate
 from .crud import create, get_list, get_object, delete_object, update_object_put, get_fields_by_template
 from sqlalchemy.ext.asyncio import AsyncSession
-from admins.models import Topic, Category, TemplateField, Template
+from admins.models import Topic, Category, TemplateField, Template, TemplateFieldAnswer
 from typing import List
 
 from database import get_async_session
@@ -29,6 +30,11 @@ router_template_field = APIRouter(
     tags=["TemplateField"]
 )
 
+
+router_template_field_answer = APIRouter(
+    prefix="/template_field_answers",
+    tags=["TemplateFieldAnswer"]
+)
 
 @router_topic.post("/", response_model=TopicSchemaReturn, status_code=201)
 async def create_topic(topic_object: TopicSchemaCreate, session: AsyncSession = Depends(get_async_session)):
@@ -141,3 +147,12 @@ async def update_put_template_field(template_field_id: int, template_field: Temp
     template_data = template_field_dict.pop("template")
     fk_obj = {"template_id": template_data["id"]}
     return await update_object_put(TemplateField, session, template_field_id, template_field_dict, fk_obj, True)
+
+
+# TemplateFieldAnswer endpoints
+@router_template_field_answer.post("/", response_model=TemplateFieldAnswerSchemaReturn, status_code=201)
+async def create_template_field_answer(template_field_answer_object: TemplateFieldAnswerSchemaCreate, session: AsyncSession = Depends(get_async_session)):
+    template_field_answer_dict = template_field_answer_object.dict()
+    obj = await get_obj(TemplateField, session, template_field_answer_dict.get("template_field").get("id"))
+    template_field_answer_dict["template_field"] = obj
+    return await create(TemplateFieldAnswer, session, template_field_answer_dict)
