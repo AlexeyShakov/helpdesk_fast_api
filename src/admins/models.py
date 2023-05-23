@@ -45,6 +45,7 @@ class TemplateField(Base):
     template_id = Column(Integer, ForeignKey("templates.id"))
 
     template = relationship("Template", back_populates="template_fields", lazy="joined")
+    template_field_answers = relationship("TemplateFieldAnswer", cascade="all,delete", back_populates="template_field")
 
 
 class TemplateFieldAnswer(Base):
