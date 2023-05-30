@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from .schemas import TopicSchemaReturn, TopicSchemaCreate, CategorySchemaReturn, CategorySchemaCreate, \
     TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate, \
     TemplateFieldAnswerSchemaReturn, TemplateFieldAnswerSchemaCreate
@@ -10,31 +10,33 @@ from typing import List
 from database import get_async_session
 from .utils import get_obj, validate_template_field_answer_value
 
+
 router_topic = APIRouter(
-    prefix="/topics",
+    prefix="/api/topics",
     tags=["Topic"]
 )
 
 router_category = APIRouter(
-    prefix="/categories",
+    prefix="/api/categories",
     tags=["Category"]
 )
 
 router_template = APIRouter(
-    prefix="/templates",
+    prefix="/api/templates",
     tags=["Template"]
 )
 
 router_template_field = APIRouter(
-    prefix="/template_fields",
+    prefix="/api/template_fields",
     tags=["TemplateField"]
 )
 
 
 router_template_field_answer = APIRouter(
-    prefix="/template_field_answers",
+    prefix="/api/template_field_answers",
     tags=["TemplateFieldAnswer"]
 )
+
 
 @router_topic.post("/", response_model=TopicSchemaReturn, status_code=201)
 async def create_topic(topic_object: TopicSchemaCreate, session: AsyncSession = Depends(get_async_session)):

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Sequence
 from sqlalchemy import update, exc
-from fastapi import  HTTPException
+from fastapi import HTTPException
 
 async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     obj = model(**data)
