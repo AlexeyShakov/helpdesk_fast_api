@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, Request
+
+from .filters import TopicFilter
 from .schemas import TopicSchemaReturn, TopicSchemaCreate, CategorySchemaReturn, CategorySchemaCreate, \
     TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate, \
     TemplateFieldAnswerSchemaReturn, TemplateFieldAnswerSchemaCreate
@@ -44,8 +46,8 @@ async def create_topic(topic_object: TopicSchemaCreate, session: AsyncSession = 
 
 
 @router_topic.get("/", response_model=List[TopicSchemaReturn], status_code=200)
-async def read_topic(session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
-    return await get_list(Topic, session, offset, limit)
+async def read_topics(filter_params: TopicFilter = Depends(TopicFilter), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
+    return await get_list(Topic, session, filter_params.get_dict_with_values(), offset, limit)
 
 
 @router_topic.get("/{topic_id}", response_model=TopicSchemaReturn, status_code=200)

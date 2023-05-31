@@ -6,6 +6,7 @@ from sqlalchemy import select
 from typing import Sequence
 from sqlalchemy import update, exc
 from fastapi import HTTPException
+from sqlalchemy import or_
 
 async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     obj = model(**data)
@@ -15,8 +16,11 @@ async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     return obj
 
 
-async def get_list(model: Base, session: AsyncSession, offset: int = 0, limit: int = 2) -> Sequence:
-    query = select(model).offset(offset).limit(limit)
+async def get_list(model: Base, session: AsyncSession, filter_params = None, offset: int = 0, limit: int = 2) -> Sequence:
+    if filter_params is None:
+        filter_params = dict()
+
+    query = select(model).filter_by(**filter_params).offset(offset).limit(limit)
     result = await session.execute(query)
     return result.scalars().all()
 
