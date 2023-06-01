@@ -47,7 +47,7 @@ async def create_topic(topic_object: TopicSchemaCreate, session: AsyncSession = 
 
 @router_topic.get("/", response_model=List[TopicSchemaReturn], status_code=200)
 async def read_topics(filter_params: TopicFilter = Depends(TopicFilter), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
-    return await get_list(Topic, session, filter_params.get_dict_with_values(), offset, limit)
+    return await get_list(Topic, session, filter_params, offset, limit)
 
 
 @router_topic.get("/{topic_id}", response_model=TopicSchemaReturn, status_code=200)

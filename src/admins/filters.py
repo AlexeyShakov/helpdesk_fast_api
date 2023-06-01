@@ -1,7 +1,26 @@
-class TopicFilter:
-    def __init__(self, name: str = None, id: int = None):
-        self.name = name
-        self.id = id
+from typing import Union
 
-    def get_list_for_filters(self):
-        return {k: v for k, v in self.__dict__.items() if v}
+from sqlalchemy.sql.selectable import Select
+
+from admins.models import Topic
+from database import Base
+class BaseFilter:
+    def get_not_null_filters(self, model: Base) -> list:
+        filters_with_values = {k: v for k, v in self.__dict__.items() if v}
+        filters = []
+        for key, value in filters_with_values.items():
+            filters.append(getattr(model, key) == value)
+        return filters
+
+
+class TopicFilter(BaseFilter):
+    __model = Topic
+    def __init__(self, name: str = None):
+        self.name = name
+
+    def has_categories(self, value: bool, query: Select) -> Union[Select, list]:
+        if value:
+            # noinspection PyTypeChecker
+            return query.filter(self.__model.categories != None)
+        return []
+

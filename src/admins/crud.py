@@ -1,3 +1,4 @@
+from admins.filters import BaseFilter
 from admins.models import TemplateField
 from admins.utils import get_obj
 from database import Base
@@ -16,11 +17,10 @@ async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     return obj
 
 
-async def get_list(model: Base, session: AsyncSession, filter_params = None, offset: int = 0, limit: int = 2) -> Sequence:
-    if filter_params is None:
-        filter_params = dict()
-
-    query = select(model).filter_by(**filter_params).offset(offset).limit(limit)
+async def get_list(model: Base, session: AsyncSession, filter_params: BaseFilter, offset: int = 0, limit: int = 2) -> Sequence:
+    filters = filter_params.get_not_null_filters(model)
+    query = select(model)
+    query = query.filter(or_(*filters)).offset(offset).limit(limit)
     result = await session.execute(query)
     return result.scalars().all()
 
