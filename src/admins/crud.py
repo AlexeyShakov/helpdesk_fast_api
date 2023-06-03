@@ -1,4 +1,3 @@
-from admins.filters import FilterExample
 from admins.models import TemplateField
 from admins.utils import get_obj
 from database import Base
@@ -7,9 +6,10 @@ from sqlalchemy import select
 from typing import Sequence
 from sqlalchemy import update, exc
 from fastapi import HTTPException
-from sqlalchemy import or_
-
+from sqlalchemy.engine.cursor import CursorResult
 from admins import filters
+from sqlalchemy import desc
+
 
 async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     obj = model(**data)
@@ -19,15 +19,24 @@ async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     return obj
 
 
-async def get_list(model: Base,filter_class_name: str, session: AsyncSession, filter_params: dict, offset: int = 0, limit: int = 2) -> Sequence:
-    if any([v for k, v in filter_params.items()]):
+async def get_list(model: Base, filter_class_name: str, session: AsyncSession, filter_params: dict, ordering_params: dict, offset: int = 0, limit: int = 2) -> Sequence:
+    query = select(model)
+    if filter_class_name and any([v for k, v in filter_params.items()]):
         filter_class = getattr(filters, filter_class_name)
         filter_instance = filter_class(**filter_params)
-        query = filter_instance.process_filtering(filter_instance.__dict__)
-    else:
-        query = select(model)
+        query = filter_instance.process_filtering(filter_instance.__dict__, query)
+    if ordering_field := ordering_params["ordering"]:
+        query = query.order_by(desc(ordering_field))
+    query = query.limit(limit).offset(offset)
     result = await session.execute(query)
-    return result.scalars().all()
+    if type(result) == CursorResult:
+        needed_objects = result.all()
+    else:
+        needed_objects = result.scalars().all()
+    return needed_objects
+
+
+
 
 async def get_object(model: Base, session: AsyncSession, id: int) -> Base:
     return await get_obj(model, session, id)
@@ -65,8 +74,4 @@ async def get_fields_by_template(session: AsyncSession, template_id: int):
     result = await session.execute(query)
     objs = result.scalars().all()
     return objs
-
-
-
-
 

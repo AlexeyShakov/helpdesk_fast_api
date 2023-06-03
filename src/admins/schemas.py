@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ValidationError, validator
 
-from admins.enums import TypeChoices
+from admins.enums import TypeChoices, TopicOrderingChoices
 from admins.models import TemplateFieldChoices, TemplateField
 
 
@@ -95,6 +95,10 @@ class TemplateFieldAnswerSchemaReturn(TemplateFieldAnswerSchemaCreate):
         orm_mode = True
 
 
-class TopicFilter(BaseModel):
+class TopicFilterSchema(BaseModel):
     name: Optional[str] = None
     has_categories: Optional[bool] = None
+
+
+class TopicOrderingSchema(BaseModel):
+    ordering: Optional[TopicOrderingChoices] = None
