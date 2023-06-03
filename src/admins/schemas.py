@@ -93,3 +93,8 @@ class TemplateFieldAnswerSchemaReturn(TemplateFieldAnswerSchemaCreate):
 
     class Config:
         orm_mode = True
+
+
+class TopicFilter(BaseModel):
+    name: Optional[str] = None
+    has_categories: Optional[bool] = None

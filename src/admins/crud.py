@@ -1,4 +1,4 @@
-from admins.filters import BaseFilter
+from admins.filters import FilterExample
 from admins.models import TemplateField
 from admins.utils import get_obj
 from database import Base
@@ -9,6 +9,8 @@ from sqlalchemy import update, exc
 from fastapi import HTTPException
 from sqlalchemy import or_
 
+from admins import filters
+
 async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     obj = model(**data)
     session.add(obj)
@@ -17,10 +19,13 @@ async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     return obj
 
 
-async def get_list(model: Base, session: AsyncSession, filter_params: BaseFilter, offset: int = 0, limit: int = 2) -> Sequence:
-    filters = filter_params.get_not_null_filters(model)
-    query = select(model)
-    query = query.filter(or_(*filters)).offset(offset).limit(limit)
+async def get_list(model: Base,filter_class_name: str, session: AsyncSession, filter_params: dict, offset: int = 0, limit: int = 2) -> Sequence:
+    if any([v for k, v in filter_params.items()]):
+        filter_class = getattr(filters, filter_class_name)
+        filter_instance = filter_class(**filter_params)
+        query = filter_instance.process_filtering(filter_instance.__dict__)
+    else:
+        query = select(model)
     result = await session.execute(query)
     return result.scalars().all()
 
@@ -42,16 +47,7 @@ async def update_object_put(model: Base,
                             data: dict,
                             fk_obj: dict = None,
                             update_fk: bool = False) -> Base:
-    """
 
-    :param model:
-    :param session:
-    :param id:
-    :param data:
-    :param fk_obj: Объекты, связанные с обновяемым объектом связью foreign key
-    :param update_fk:
-    :return:
-    """
     data.pop("id")
     obj = await get_obj(model, session, id)
     if update_fk:

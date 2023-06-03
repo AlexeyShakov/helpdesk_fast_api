@@ -1,9 +1,7 @@
-from fastapi import APIRouter, Depends, Request
-
-from .filters import TopicFilter
+from fastapi import APIRouter, Depends
 from .schemas import TopicSchemaReturn, TopicSchemaCreate, CategorySchemaReturn, CategorySchemaCreate, \
     TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate, \
-    TemplateFieldAnswerSchemaReturn, TemplateFieldAnswerSchemaCreate
+    TemplateFieldAnswerSchemaReturn, TemplateFieldAnswerSchemaCreate, TopicFilter
 from .crud import create, get_list, get_object, delete_object, update_object_put, get_fields_by_template
 from sqlalchemy.ext.asyncio import AsyncSession
 from admins.models import Topic, Category, TemplateField, Template, TemplateFieldAnswer
@@ -11,6 +9,7 @@ from typing import List
 
 from database import get_async_session
 from .utils import get_obj, validate_template_field_answer_value
+
 
 
 router_topic = APIRouter(
@@ -47,13 +46,12 @@ async def create_topic(topic_object: TopicSchemaCreate, session: AsyncSession = 
 
 @router_topic.get("/", response_model=List[TopicSchemaReturn], status_code=200)
 async def read_topics(filter_params: TopicFilter = Depends(TopicFilter), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
-    return await get_list(Topic, session, filter_params, offset, limit)
+    return await get_list(Topic, "FilterExample", session, filter_params.dict(), offset, limit)
 
 
 @router_topic.get("/{topic_id}", response_model=TopicSchemaReturn, status_code=200)
 async def read_topic(topic_id: int, session: AsyncSession = Depends(get_async_session)):
     return await get_object(Topic, session, topic_id)
-
 
 @router_topic.delete("/{topic_id}", status_code=204)
 async def delete_topic(topic_id: int, session: AsyncSession = Depends(get_async_session)):
