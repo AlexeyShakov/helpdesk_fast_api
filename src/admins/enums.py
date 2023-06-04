@@ -13,3 +13,15 @@ class TypeChoices(str, enum.Enum):
 class TopicOrderingChoices(str, enum.Enum):
     NAME = "name"
     ID = "id"
+
+
+class CategoryOrderingChoices(str, enum.Enum):
+    NAME = "name"
+    ID = "id"
+    TOPIC = "topic"
+
+
+class TemplateOrderingChoices(str, enum.Enum):
+    NAME = "name"
+    ID = "id"
+    CATEGORY_COUNT = "category_count"

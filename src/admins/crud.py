@@ -3,7 +3,7 @@ from admins.utils import get_obj
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import Sequence
+from typing import Sequence, Optional
 from sqlalchemy import update, exc
 from fastapi import HTTPException
 from sqlalchemy.engine.cursor import CursorResult
@@ -19,23 +19,41 @@ async def create(model: Base, session: AsyncSession, data: dict) -> Base:
     return obj
 
 
-async def get_list(model: Base, filter_class_name: str, session: AsyncSession, filter_params: dict, ordering_params: dict, offset: int = 0, limit: int = 2) -> Sequence:
+async def get_list(model: Base,
+                   session: AsyncSession,
+                   filter_class_name: Optional[str] = None,
+                   filter_params: Optional[dict] = None,
+                   ordering_params: Optional[dict] = None,
+                   joined_ordering: Optional[dict] = None,
+                   offset: int = 0,
+                   limit: int = 2,
+                   ) -> Sequence:
+    if ordering_params is None:
+        ordering_params = dict()
+    if filter_params is None:
+        filter_params = dict()
+    if joined_ordering is None:
+        filter_params = dict()
     query = select(model)
     if filter_class_name and any([v for k, v in filter_params.items()]):
         filter_class = getattr(filters, filter_class_name)
         filter_instance = filter_class(**filter_params)
         query = filter_instance.process_filtering(filter_instance.__dict__, query)
-    if ordering_field := ordering_params["ordering"]:
-        query = query.order_by(desc(ordering_field))
-    query = query.limit(limit).offset(offset)
+    if ordering_field := ordering_params.get("ordering"):
+        if joined_ordering:
+            query = query.join(
+                joined_ordering["related_table"], getattr(model, joined_ordering["related_field_name"])
+            ) \
+                .order_by(desc(getattr(joined_ordering["related_table"], joined_ordering["ordering_field"])))
+        else:
+            query = query.order_by(desc(ordering_field))
+    # query = query.limit(limit).offset(offset)
     result = await session.execute(query)
     if type(result) == CursorResult:
         needed_objects = result.all()
     else:
         needed_objects = result.scalars().all()
     return needed_objects
-
-
 
 
 async def get_object(model: Base, session: AsyncSession, id: int) -> Base:
