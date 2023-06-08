@@ -1,8 +1,8 @@
-from admins.models import TemplateField
+from admins.models import TemplateField, Template, Category, Topic
 from admins.utils import get_obj
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, tuple_, or_
 from typing import Sequence, Optional
 from sqlalchemy import update, exc
 from fastapi import HTTPException
@@ -25,6 +25,8 @@ async def get_list(model: Base,
                    filter_params: Optional[dict] = None,
                    ordering_params: Optional[dict] = None,
                    joined_ordering: Optional[dict] = None,
+                   searching_params: Optional[dict] = None,
+                   search_fields: Optional[dict] = None,
                    offset: int = 0,
                    limit: int = 2,
                    ) -> Sequence:
@@ -34,17 +36,39 @@ async def get_list(model: Base,
         filter_params = dict()
     if joined_ordering is None:
         filter_params = dict()
-    query = select(model)
+    if searching_params is None:
+        searching_params = dict()
+    if search_fields is None:
+        search_fields = dict()
+    if joined_ordering:
+        query = select(model).join(
+            joined_ordering["related_table"], getattr(model, joined_ordering["related_field_name"])
+        )
+    else:
+        query = select(model)
+    if searching_params and searching_params["search"]:
+        ordinary_search = [
+            getattr(model, value).
+            like(f"%{searching_params['search']}%") for key, value in search_fields["ordinary"].items()
+        ]
+        related_search = [
+            getattr(element["table"], element["column"]).
+            like(f"%{searching_params['search']}%") for element in search_fields["related"]
+        ]
+        query = query.filter(or_
+                             (*related_search, *ordinary_search)
+                             )
     if filter_class_name and any([v for k, v in filter_params.items()]):
         filter_class = getattr(filters, filter_class_name)
         filter_instance = filter_class(**filter_params)
         query = filter_instance.process_filtering(filter_instance.__dict__, query)
     if ordering_field := ordering_params.get("ordering"):
         if joined_ordering:
-            query = query.join(
-                joined_ordering["related_table"], getattr(model, joined_ordering["related_field_name"])
-            ) \
-                .order_by(desc(getattr(joined_ordering["related_table"], joined_ordering["ordering_field"])))
+            query = query.order_by(
+                desc(
+                    getattr(joined_ordering["related_table"], joined_ordering["ordering_field"])
+                )
+            )
         else:
             query = query.order_by(desc(ordering_field))
     # query = query.limit(limit).offset(offset)

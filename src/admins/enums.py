@@ -11,8 +11,11 @@ class TypeChoices(str, enum.Enum):
 
 
 class TopicOrderingChoices(str, enum.Enum):
-    NAME = "name"
-    ID = "id"
+    ASC_NAME = "name"
+    ASC_ID = "id"
+    DESC_NAME = "-name"
+    DESC_ID = "-id"
+
 
 
 class CategoryOrderingChoices(str, enum.Enum):

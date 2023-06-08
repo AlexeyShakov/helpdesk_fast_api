@@ -53,8 +53,6 @@ class SelectDataSchema(NameSchema):
     index: int
 
 
-
-
 class TemplateFieldSchemaCreate(BaseModel):
     queue_index: int
     name: str
@@ -110,3 +108,6 @@ class CategoryOrderingSchema(BaseModel):
 
 class TemplateOrderingSchema(BaseModel):
     ordering: Optional[TemplateOrderingChoices] = None
+
+class SearchingSchema(BaseModel):
+    search: Optional[str] = None

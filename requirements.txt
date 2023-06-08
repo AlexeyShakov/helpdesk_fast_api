@@ -7,3 +7,4 @@ sqlalchemy
 pytest
 pytest-asyncio
 aiohttp
+fastapi_utils

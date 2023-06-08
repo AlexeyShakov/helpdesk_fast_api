@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends
+
+from crud_handler import BaseHandler
 from .schemas import TopicSchemaReturn, TopicSchemaCreate, CategorySchemaReturn, CategorySchemaCreate, \
     TemplateFieldSchemaReturn, TemplateFieldSchemaCreate, TemplateSchemaReturn, TemplateSchemaCreate, \
     TemplateFieldAnswerSchemaReturn, TemplateFieldAnswerSchemaCreate, TopicFilterSchema, TopicOrderingSchema, \
-    CategoryOrderingSchema, TemplateOrderingSchema
+    CategoryOrderingSchema, TemplateOrderingSchema, SearchingSchema
 from .crud import create, get_list, get_object, delete_object, update_object_put, get_fields_by_template
 from sqlalchemy.ext.asyncio import AsyncSession
 from admins.models import Topic, Category, TemplateField, Template, TemplateFieldAnswer
@@ -13,10 +15,10 @@ from .utils import get_obj, validate_template_field_answer_value
 
 
 
-router_topic = APIRouter(
-    prefix="/api/topics",
-    tags=["Topic"]
-)
+# router_topic = APIRouter(
+#     prefix="/api/topics",
+#     tags=["Topic"]
+# )
 
 router_category = APIRouter(
     prefix="/api/categories",
@@ -40,27 +42,13 @@ router_template_field_answer = APIRouter(
 )
 
 
-@router_topic.post("/", response_model=TopicSchemaReturn, status_code=201)
-async def create_topic(topic_object: TopicSchemaCreate, session: AsyncSession = Depends(get_async_session)):
-    return await create(Topic, session, topic_object.dict())
+
+# @router_topic.get("/", response_model=List[TopicSchemaReturn], status_code=200)
+# async def read_topics(ordering_params: TopicOrderingSchema = Depends(TopicOrderingSchema), filter_params: TopicFilterSchema = Depends(TopicFilterSchema), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
+#     return await get_list(Topic, session, "TopicFilter", filter_params.dict(), ordering_params.dict(), offset, limit)
 
 
-@router_topic.get("/", response_model=List[TopicSchemaReturn], status_code=200)
-async def read_topics(ordering_params: TopicOrderingSchema = Depends(TopicOrderingSchema), filter_params: TopicFilterSchema = Depends(TopicFilterSchema), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
-    return await get_list(Topic, session, "TopicFilter", filter_params.dict(), ordering_params.dict(), offset, limit)
 
-
-@router_topic.get("/{topic_id}", response_model=TopicSchemaReturn, status_code=200)
-async def read_topic(topic_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await get_object(Topic, session, topic_id)
-
-@router_topic.delete("/{topic_id}", status_code=204)
-async def delete_topic(topic_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await delete_object(Topic, session, topic_id)
-
-@router_topic.put("/{topic_id}", response_model=TopicSchemaReturn, status_code=200)
-async def update_put_topic(topic_id: int, topic: TopicSchemaReturn, session: AsyncSession = Depends(get_async_session)):
-    return await update_object_put(Topic, session, topic_id, topic.dict())
 
 # Category endpoints
 @router_category.post("/", response_model=CategorySchemaReturn, status_code=201)
@@ -73,12 +61,22 @@ async def create_category(category_object: CategorySchemaCreate, session: AsyncS
     return await create(Category, session, category_dict)
 
 @router_category.get("/", response_model=List[CategorySchemaReturn], status_code=200)
-async def read_categories(ordering_params: CategoryOrderingSchema = Depends(CategoryOrderingSchema), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
-    if ordering_params.ordering == "topic":
-        joined_ordering = {"related_table": Topic, "related_field_name": "topic", "ordering_field": "name"}
-        return await get_list(model=Category, session=session, ordering_params=ordering_params.dict(),
-                              joined_ordering=joined_ordering)
-    return await get_list(model=Category, session=session, ordering_params=ordering_params.dict())
+async def read_categories(ordering_params: CategoryOrderingSchema = Depends(CategoryOrderingSchema),
+                          session: AsyncSession = Depends(get_async_session),
+                          searching_params: SearchingSchema = Depends(SearchingSchema),
+                          offset: int = 0,
+                          limit: int = 2):
+    search_fields = {
+        "ordinary": {"column": "name"},
+        "related": [{"table": Topic, "column": "name"}]
+    }
+    joined_ordering = {"related_table": Topic, "related_field_name": "topic", "ordering_field": "name"}
+    return await get_list(model=Category,
+                          session=session,
+                          ordering_params=ordering_params.dict(),
+                          joined_ordering=joined_ordering,
+                          searching_params=searching_params.dict(),
+                          search_fields=search_fields)
 
 @router_category.get("/{category_id}", response_model=CategorySchemaReturn, status_code=200)
 async def read_category(category_id: int, session: AsyncSession = Depends(get_async_session)):
@@ -102,8 +100,12 @@ async def create_template_field(template_object: TemplateSchemaCreate, session: 
     return await create(Template, session, template_object.dict())
 
 @router_template.get("/", response_model=List[TemplateSchemaReturn], status_code=200)
-async def read_templates(ordering_params: TemplateOrderingSchema = Depends(TemplateOrderingSchema), session: AsyncSession = Depends(get_async_session), offset: int = 0, limit: int = 2):
-    return await get_list(Template, session, ordering_params=ordering_params.dict())
+async def read_templates(ordering_params: TemplateOrderingSchema = Depends(TemplateOrderingSchema),
+                         session: AsyncSession = Depends(get_async_session),
+                         searching_params: SearchingSchema = Depends(SearchingSchema),
+                         offset: int = 0,
+                         limit: int = 2):
+    return await get_list(Template, session, ordering_params=ordering_params.dict(), searching_params=searching_params.dict())
 
 
 @router_template.get("/{template_id}", response_model=TemplateSchemaReturn, status_code=200)
