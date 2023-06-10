@@ -5,6 +5,7 @@ from sqlalchemy import select, update, exc
 from sqlalchemy import desc, asc
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
+from filters import BaseFilter
 
 
 class BaseHandler:
@@ -12,8 +13,11 @@ class BaseHandler:
         "asc": asc,
         "desc": desc
     }
-    def __init__(self, model: Base):
+    filter_class = None
+
+    def __init__(self, model: Base, filter_class: BaseFilter):
         self.model = model
+        self.filter_class = filter_class
 
     async def create(self, session: AsyncSession, data: dict) -> Base:
         obj = self.model(**data)
@@ -23,18 +27,31 @@ class BaseHandler:
         return obj
 
     async def list(self,
+                   offset: int,
+                   limit: int,
                    session: AsyncSession,
                    joined_ordering: Optional[dict] = None,
                    ordering_params: Optional[dict] = None,
+                   filter_params: Optional[dict] = None,
                    ) -> Sequence:
+        # Для взаимодействия со связанными объектами
         if joined_ordering:
             query = select(self.model).join(
                 joined_ordering["related_table"], getattr(self.model, joined_ordering["related_field_name"])
             )
         else:
             query = select(self.model)
+        # Pagination
+        query = query.offset(offset * limit).limit(limit)
+        # Filtering
+        if self.filter_class and filter_params and any([v for k, v in filter_params.items()]):
+            filter_instance = self.filter_class(**filter_params)
+            query = filter_instance.process_filtering(filter_instance.__dict__, query)
+        ###
+        # Sorting
         if ordering_params and (ordering_field := ordering_params.get("ordering")):
             query = await self.order_query(query, ordering_field, joined_ordering)
+
         result = await session.execute(query)
         if type(result) == CursorResult:
             needed_objects = result.all()
@@ -83,7 +100,7 @@ class BaseHandler:
 
     async def order_query(self, query, ordering_field: str, joined_ordering: Optional[dict]):
         ordering = self.ordering_mapper["desc"] if ordering_field[0] == "-" else self.ordering_mapper["asc"]
-        field_name = ordering_field[1:]
+        field_name = ordering_field[1:] if ordering_field[0] == "-" else ordering_field
         if joined_ordering:
             query = query.order_by(
                 ordering(
