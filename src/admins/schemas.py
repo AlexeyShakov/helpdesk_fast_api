@@ -9,6 +9,7 @@ from admins.models import TemplateFieldChoices, TemplateField
 class TopicSchemaCreate(BaseModel):
     name: str
 
+
 class TopicSchemaReturn(TopicSchemaCreate):
     id: int
 
@@ -22,6 +23,7 @@ class TemplateSchemaCreate(BaseModel):
 
 class TemplateSchemaReturn(TemplateSchemaCreate):
     id: int
+
     # Нужно еще как-то возвращать все TemplateField, связанные с Template
     class Config:
         orm_mode = True
@@ -39,6 +41,7 @@ class CategorySchemaCreate(BaseModel):
     time_of_life: TimeSchema
     notification_repeat: TimeSchema
 
+
 class CategorySchemaReturn(CategorySchemaCreate):
     id: int
 
@@ -48,6 +51,7 @@ class CategorySchemaReturn(CategorySchemaCreate):
 
 class NameSchema(BaseModel):
     name: str
+
 
 class SelectDataSchema(NameSchema):
     index: int
@@ -109,5 +113,10 @@ class CategoryOrderingSchema(BaseModel):
 class TemplateOrderingSchema(BaseModel):
     ordering: Optional[TemplateOrderingChoices] = None
 
+
 class SearchingSchema(BaseModel):
     search: Optional[str] = None
+
+
+class TemplateFilterSchema(BaseModel):
+    has_fields: Optional[bool] = None

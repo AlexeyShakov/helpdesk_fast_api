@@ -1,11 +1,12 @@
 from fastapi import HTTPException
 from typing import Sequence, Optional
 from sqlalchemy.engine.cursor import CursorResult
-from sqlalchemy import select, update, exc
+from sqlalchemy import select, update, exc, or_
 from sqlalchemy import desc, asc
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from filters import BaseFilter
+from sqlalchemy.sql.selectable import Select
 
 
 class BaseHandler:
@@ -15,7 +16,7 @@ class BaseHandler:
     }
     filter_class = None
 
-    def __init__(self, model: Base, filter_class: BaseFilter):
+    def __init__(self, model: Base, filter_class: Optional[BaseFilter] = None):
         self.model = model
         self.filter_class = filter_class
 
@@ -33,6 +34,8 @@ class BaseHandler:
                    joined_ordering: Optional[dict] = None,
                    ordering_params: Optional[dict] = None,
                    filter_params: Optional[dict] = None,
+                   search_fields: Optional[dict] = None,
+                   searching_params: Optional[dict] = None
                    ) -> Sequence:
         # Для взаимодействия со связанными объектами
         if joined_ordering:
@@ -45,12 +48,19 @@ class BaseHandler:
         query = query.offset(offset * limit).limit(limit)
         # Filtering
         if self.filter_class and filter_params and any([v for k, v in filter_params.items()]):
+            print("Я тут", filter_params)
+            print("filter_class", self.filter_class)
             filter_instance = self.filter_class(**filter_params)
+            print("filter_instance", filter_instance)
+            print("asda", filter_instance.__dict__)
             query = filter_instance.process_filtering(filter_instance.__dict__, query)
         ###
         # Sorting
         if ordering_params and (ordering_field := ordering_params.get("ordering")):
             query = await self.order_query(query, ordering_field, joined_ordering)
+        # Searching
+        if searching_params and searching_params["search"]:
+            query = await self.make_search(searching_params, search_fields, query)
 
         result = await session.execute(query)
         if type(result) == CursorResult:
@@ -110,3 +120,16 @@ class BaseHandler:
         else:
             query = query.order_by(ordering(field_name))
         return query
+
+    async def make_search(self, searching_params: dict, search_fields: dict, query: Select):
+        ordinary_search = [
+            getattr(self.model, value).
+            like(f"%{searching_params['search']}%") for key, value in search_fields["ordinary"].items()
+        ]
+        related_search = [
+            getattr(element["table"], element["column"]).
+            like(f"%{searching_params['search']}%") for element in search_fields["related"]
+        ]
+        return query.filter(or_
+                            (*related_search, *ordinary_search)
+                             )

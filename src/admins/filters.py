@@ -1,6 +1,6 @@
 from typing import Optional
 from sqlalchemy.sql.selectable import Exists
-from admins.models import Topic
+from admins.models import Topic, Template
 from fields import Field
 from filters import BaseFilter
 
@@ -21,3 +21,17 @@ class TopicFilter(BaseFilter):
             return self.Meta.model.categories != None
         return None
 
+
+class TemplateFilter(BaseFilter):
+    has_fields_filter = Field(method="get_has_fields")
+
+    class Meta:
+        model = Template
+
+    def __init__(self, has_fields: Optional[bool] = None):
+        self.has_fields = has_fields
+
+    def get_has_fields(self, value: bool) -> Optional[Exists]:
+        if value:
+            return self.Meta.model.template_fields != None
+        return None

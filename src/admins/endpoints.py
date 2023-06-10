@@ -17,11 +17,6 @@ router_category = APIRouter(
     tags=["Category"]
 )
 
-router_template = APIRouter(
-    prefix="/api/templates",
-    tags=["Template"]
-)
-
 router_template_field = APIRouter(
     prefix="/api/template_fields",
     tags=["TemplateField"]
@@ -83,42 +78,9 @@ async def update_put_category(category_id: int, category: CategorySchemaReturn,
     return await update_object_put(Category, session, category_id, category_dict, fk_obj, True)
 
 
-# Template endpoints
-@router_template.post("/", response_model=TemplateSchemaReturn, status_code=201)
-async def create_template_field(template_object: TemplateSchemaCreate,
-                                session: AsyncSession = Depends(get_async_session)):
-    return await create(Template, session, template_object.dict())
-
-
-@router_template.get("/", response_model=List[TemplateSchemaReturn], status_code=200)
-async def read_templates(ordering_params: TemplateOrderingSchema = Depends(TemplateOrderingSchema),
-                         session: AsyncSession = Depends(get_async_session),
-                         searching_params: SearchingSchema = Depends(SearchingSchema),
-                         offset: int = 0,
-                         limit: int = 2):
-    return await get_list(Template, session, ordering_params=ordering_params.dict(),
-                          searching_params=searching_params.dict())
-
-
-@router_template.get("/{template_id}", response_model=TemplateSchemaReturn, status_code=200)
-async def read_template(template_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await get_object(Template, session, template_id)
-
-
-@router_template.delete("/{template_id}", status_code=204)
-async def delete_category(template_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await delete_object(Template, session, template_id)
-
-
-@router_template.put("/{template_id}", response_model=TemplateSchemaReturn, status_code=200)
-async def update_put_topic(template_id: int, template: TemplateSchemaReturn,
-                           session: AsyncSession = Depends(get_async_session)):
-    return await update_object_put(Template, session, template_id, template.dict())
-
-
-@router_template.get("/{template_id}/template_fields", response_model=List[TemplateFieldSchemaReturn], status_code=200)
-async def fields_by_template(template_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await get_fields_by_template(session, template_id)
+# @router_template.get("/{template_id}/template_fields", response_model=List[TemplateFieldSchemaReturn], status_code=200)
+# async def fields_by_template(template_id: int, session: AsyncSession = Depends(get_async_session)):
+#     return await get_fields_by_template(session, template_id)
 
 
 # TemplateField endpoints
