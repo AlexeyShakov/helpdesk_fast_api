@@ -3,6 +3,8 @@ from typing import Sequence, Optional
 from sqlalchemy.engine.cursor import CursorResult
 from sqlalchemy import select, update, exc, or_
 from sqlalchemy import desc, asc
+from sqlalchemy.exc import IntegrityError
+
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from filters import BaseFilter
@@ -103,7 +105,11 @@ class BaseHandler:
             for k, v in fk_obj.items():
                 setattr(obj, k, v)
         stmt = update(self.model).filter_by(id=id).values(**data).execution_options(synchronize_session="fetch")
-        await session.execute(stmt)
+        try:
+            await session.execute(stmt)
+        except IntegrityError:
+            raise HTTPException(status_code=500,
+                                detail=f"There is no object with id={v} for {k}")
         await session.commit()
         await session.refresh(obj)
         return obj
@@ -132,4 +138,4 @@ class BaseHandler:
         ]
         return query.filter(or_
                             (*related_search, *ordinary_search)
-                             )
+                            )

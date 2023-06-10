@@ -12,11 +12,6 @@ from typing import List
 from database import get_async_session
 from .utils import get_obj, validate_template_field_answer_value
 
-router_category = APIRouter(
-    prefix="/api/categories",
-    tags=["Category"]
-)
-
 router_template_field = APIRouter(
     prefix="/api/template_fields",
     tags=["TemplateField"]
@@ -28,54 +23,6 @@ router_template_field_answer = APIRouter(
 )
 
 
-# Category endpoints
-@router_category.post("/", response_model=CategorySchemaReturn, status_code=201)
-async def create_category(category_object: CategorySchemaCreate, session: AsyncSession = Depends(get_async_session)):
-    category_dict = category_object.dict()
-    topic_obj = await get_obj(Topic, session, category_dict.get("topic").get("id"))
-    template_obj = await get_obj(Template, session, category_dict.get("template").get("id"))
-    category_dict["topic"] = topic_obj
-    category_dict["template"] = template_obj
-    return await create(Category, session, category_dict)
-
-
-@router_category.get("/", response_model=List[CategorySchemaReturn], status_code=200)
-async def read_categories(ordering_params: CategoryOrderingSchema = Depends(CategoryOrderingSchema),
-                          session: AsyncSession = Depends(get_async_session),
-                          searching_params: SearchingSchema = Depends(SearchingSchema),
-                          offset: int = 0,
-                          limit: int = 2):
-    search_fields = {
-        "ordinary": {"column": "name"},
-        "related": [{"table": Topic, "column": "name"}]
-    }
-    joined_ordering = {"related_table": Topic, "related_field_name": "topic", "ordering_field": "name"}
-    return await get_list(model=Category,
-                          session=session,
-                          ordering_params=ordering_params.dict(),
-                          joined_ordering=joined_ordering,
-                          searching_params=searching_params.dict(),
-                          search_fields=search_fields)
-
-
-@router_category.get("/{category_id}", response_model=CategorySchemaReturn, status_code=200)
-async def read_category(category_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await get_object(Category, session, category_id)
-
-
-@router_category.delete("/{category_id}", status_code=204)
-async def delete_category(category_id: int, session: AsyncSession = Depends(get_async_session)):
-    return await delete_object(Category, session, category_id)
-
-
-@router_category.put("/{category_id}", response_model=CategorySchemaReturn, status_code=200, )
-async def update_put_category(category_id: int, category: CategorySchemaReturn,
-                              session: AsyncSession = Depends(get_async_session)):
-    category_dict = category.dict()
-    topic_data = category_dict.pop("topic")
-    template_data = category_dict.pop("template")
-    fk_obj = {"topic_id": topic_data["id"], "template_id": template_data["id"]}
-    return await update_object_put(Category, session, category_id, category_dict, fk_obj, True)
 
 
 # @router_template.get("/{template_id}/template_fields", response_model=List[TemplateFieldSchemaReturn], status_code=200)

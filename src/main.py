@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request
 from starlette.responses import JSONResponse
 
+from admins.ends.categories import category_router
 from admins.ends.topics import topic_router
 from admins.ends.templates import template_router
-from admins.endpoints import router_category, router_template_field, \
+from admins.endpoints import router_template_field, \
     router_template_field_answer
 from authentication import BasicAuthBackend
 from starlette.middleware import Middleware
@@ -22,6 +23,6 @@ app = FastAPI(middleware=middleware)
 
 app.include_router(topic_router)
 app.include_router(template_router)
-app.include_router(router_category)
+app.include_router(category_router)
 app.include_router(router_template_field)
 app.include_router(router_template_field_answer)

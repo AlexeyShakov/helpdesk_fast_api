@@ -19,9 +19,12 @@ class TopicOrderingChoices(str, enum.Enum):
 
 
 class CategoryOrderingChoices(str, enum.Enum):
-    NAME = "name"
-    ID = "id"
-    TOPIC = "topic"
+    ASC_NAME = "name"
+    ASC_ID = "id"
+    ASC_TOPIC = "topic"
+    DESC_NAME = "-name"
+    DESC_ID = "-id"
+    DESC_TOPIC = "-topic"
 
 
 class TemplateOrderingChoices(str, enum.Enum):
