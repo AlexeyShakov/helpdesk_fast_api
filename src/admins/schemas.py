@@ -17,6 +17,14 @@ class TopicSchemaReturn(TopicSchemaCreate):
         orm_mode = True
 
 
+class TopicListSchemaReturn(TopicSchemaReturn):
+    id: int
+    category_count: int
+
+    class Config:
+        orm_mode = True
+
+
 class TemplateSchemaCreate(BaseModel):
     name: str
 

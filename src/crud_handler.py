@@ -30,6 +30,7 @@ class BaseHandler:
         return obj
 
     async def list(self,
+                   query: Select,
                    offset: int,
                    limit: int,
                    session: AsyncSession,
@@ -39,24 +40,12 @@ class BaseHandler:
                    search_fields: Optional[dict] = None,
                    searching_params: Optional[dict] = None
                    ) -> Sequence:
-        # Для взаимодействия со связанными объектами
-        if joined_ordering:
-            query = select(self.model).join(
-                joined_ordering["related_table"], getattr(self.model, joined_ordering["related_field_name"])
-            )
-        else:
-            query = select(self.model)
         # Pagination
         query = query.offset(offset * limit).limit(limit)
         # Filtering
         if self.filter_class and filter_params and any([v for k, v in filter_params.items()]):
-            print("Я тут", filter_params)
-            print("filter_class", self.filter_class)
             filter_instance = self.filter_class(**filter_params)
-            print("filter_instance", filter_instance)
-            print("asda", filter_instance.__dict__)
             query = filter_instance.process_filtering(filter_instance.__dict__, query)
-        ###
         # Sorting
         if ordering_params and (ordering_field := ordering_params.get("ordering")):
             query = await self.order_query(query, ordering_field, joined_ordering)

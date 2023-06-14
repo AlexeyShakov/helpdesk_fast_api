@@ -1,9 +1,11 @@
-from typing import TYPE_CHECKING, Any, Callable, get_type_hints, List, Optional
-
-from fastapi import Depends, APIRouter
+from typing import List
+from sqlalchemy.orm import selectinload
+from fastapi import Depends
+from sqlalchemy import select
 
 from admins.filters import TopicFilter
-from admins.schemas import TopicSchemaReturn, TopicSchemaCreate, TopicOrderingSchema, TopicFilterSchema
+from admins.schemas import TopicSchemaReturn, TopicSchemaCreate, TopicOrderingSchema, TopicFilterSchema, \
+    TopicListSchemaReturn
 from crud_handler import BaseHandler
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
@@ -26,13 +28,15 @@ class TopicView(BaseHandler):
     async def create_item(self, topic_object: TopicSchemaCreate):
         return await self.create(self.session, topic_object.dict())
 
-    @topic_router.get(f"{ROUTE}/", response_model=List[TopicSchemaReturn], status_code=200)
+    @topic_router.get(f"{ROUTE}/", response_model=List[TopicListSchemaReturn], status_code=200)
     async def get_topics(self,
                          ordering_params: TopicOrderingSchema = Depends(TopicOrderingSchema),
                          filter_params: TopicFilterSchema = Depends(TopicFilterSchema),
                          offset: int = 0,
                          limit: int = 5):
-        return await self.list(session=self.session,
+        query = select(self.model).options(selectinload(Topic.categories))
+        return await self.list(query=query,
+                               session=self.session,
                                ordering_params=ordering_params.dict(),
                                filter_params=filter_params.dict(),
                                limit=limit,

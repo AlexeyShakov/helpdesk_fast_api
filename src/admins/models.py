@@ -11,6 +11,10 @@ class Topic(Base):
     # Для связи один ко многим
     categories = relationship("Category", back_populates="topic")
 
+    @property
+    def category_count(self) -> int:
+        return len(self.categories)
+
 
 class Template(Base):
     __tablename__ = "templates"
@@ -56,6 +60,3 @@ class TemplateFieldAnswer(Base):
     template_field_id = Column(Integer, ForeignKey("template_fields.id"))
 
     template_field = relationship("TemplateField", back_populates="template_field_answers", lazy="joined")
-
-
-

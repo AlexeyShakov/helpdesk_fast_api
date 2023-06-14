@@ -3,6 +3,7 @@ from typing import List
 from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from admins.filters import TemplateFilter
@@ -40,7 +41,9 @@ class TemplateView(BaseHandler):
             "ordinary": {"column": "name"},
             "related": []
         }
-        return await self.list(session=self.session,
+        query = select(self.model)
+        return await self.list(query=query,
+                               session=self.session,
                                ordering_params=ordering_params.dict(),
                                searching_params=searching_params.dict(),
                                search_fields=search_fields,

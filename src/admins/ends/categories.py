@@ -3,6 +3,7 @@ from typing import List
 from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from admins.models import Category, Topic, Template
@@ -10,7 +11,7 @@ from admins.schemas import CategorySchemaReturn, CategorySchemaCreate, CategoryO
 from crud_handler import BaseHandler
 from database import get_async_session
 
-category_router = InferringRouter(tags=["Template"])
+category_router = InferringRouter(tags=["Сategory"])
 ROUTE = "/api/categories"
 
 
@@ -43,7 +44,9 @@ class CategoryView(BaseHandler):
             "related": [{"table": Topic, "column": "name"}]
         }
         joined_ordering = {"related_table": Topic, "related_field_name": "topic", "ordering_field": "name"}
+        query = select(self.model).join(Topic)
         return await self.list(
+            query=query,
             session=self.session,
             ordering_params=ordering_params.dict(),
             joined_ordering=joined_ordering,
