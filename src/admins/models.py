@@ -1,6 +1,6 @@
 from admins.enums import TemplateFieldChoices
 from database import Base, metadata
-from sqlalchemy import Integer, Column, String, ForeignKey, Boolean, Enum, JSON
+from sqlalchemy import Integer, Column, String, ForeignKey, Boolean, Enum, JSON, Text
 from sqlalchemy.orm import relationship
 
 
@@ -36,6 +36,7 @@ class Category(Base):
 
     template = relationship("Template", back_populates="categories", lazy="joined")
     topic = relationship("Topic", back_populates="categories", lazy="joined")
+    ready_answers = relationship("ReadyAnswer", back_populates="category")
 
 
 class TemplateField(Base):
@@ -60,3 +61,12 @@ class TemplateFieldAnswer(Base):
     template_field_id = Column(Integer, ForeignKey("template_fields.id"))
 
     template_field = relationship("TemplateField", back_populates="template_field_answers", lazy="joined")
+
+
+class ReadyAnswer(Base):
+    __tablename__ = "ready_answers"
+    id = Column(Integer, primary_key=True)
+    answer_text = Column(Text, nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id"))
+
+    category = relationship("Category", back_populates="ready_answers", lazy="joined")

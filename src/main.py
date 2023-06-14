@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from starlette.responses import JSONResponse
 
 from admins.endpoints.categories import category_router
+from admins.endpoints.ready_answers import ready_answers_router
 from admins.endpoints.template_fields import template_fields_router
 from admins.endpoints.templates import template_router
 from admins.endpoints.topics import topic_router
@@ -24,3 +25,4 @@ app.include_router(topic_router)
 app.include_router(template_router)
 app.include_router(category_router)
 app.include_router(template_fields_router)
+app.include_router(ready_answers_router)

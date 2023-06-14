@@ -1,9 +1,9 @@
 from typing import Optional
 
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, validator
 
 from admins.enums import TypeChoices, TopicOrderingChoices, CategoryOrderingChoices, TemplateOrderingChoices
-from admins.models import TemplateFieldChoices, TemplateField
+from admins.models import TemplateFieldChoices
 
 
 class TopicSchemaCreate(BaseModel):
@@ -42,6 +42,13 @@ class TimeSchema(BaseModel):
     type: TypeChoices
 
 
+class CategoryOnlyIDSchema(BaseModel):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
 class CategorySchemaCreate(BaseModel):
     name: str
     topic: TopicSchemaReturn
@@ -50,11 +57,8 @@ class CategorySchemaCreate(BaseModel):
     notification_repeat: TimeSchema
 
 
-class CategorySchemaReturn(CategorySchemaCreate):
-    id: int
-
-    class Config:
-        orm_mode = True
+class CategorySchemaReturn(CategoryOnlyIDSchema, CategorySchemaCreate):
+    pass
 
 
 class NameSchema(BaseModel):
@@ -92,13 +96,12 @@ class TemplateFieldSchemaReturn(TemplateFieldSchemaCreate):
         orm_mode = True
 
 
-class TemplateFieldAnswerSchemaCreate(BaseModel):
-    template_field: TemplateFieldSchemaReturn
-    label: str
-    value: dict
+class ReadyAnswerSchemaCreate(BaseModel):
+    answer_text: str
+    category: CategoryOnlyIDSchema
 
 
-class TemplateFieldAnswerSchemaReturn(TemplateFieldAnswerSchemaCreate):
+class ReadyAnswerSchemaReturn(ReadyAnswerSchemaCreate):
     id: int
 
     class Config:
