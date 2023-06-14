@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from admins.filters import TemplateFilter
 from admins.models import Template
 from admins.schemas import TemplateSchemaCreate, TemplateSchemaReturn, TemplateOrderingSchema, SearchingSchema, \
-    TemplateFilterSchema
+    TemplateFilterSchema, TemplateFieldSchemaReturn
+from admins.utils import get_fields_by_template
 from crud_handler import BaseHandler
 from database import get_async_session
 
@@ -62,3 +63,7 @@ class TemplateView(BaseHandler):
     @template_router.put(f"{ROUTE}/" + "{template_id}", response_model=TemplateSchemaReturn, status_code=200)
     async def update_template(self, template_id: int, template: TemplateSchemaReturn):
         return await self.update(self.session, template_id, template.dict())
+
+    @template_router.get("/{template_id}/template_fields", response_model=List[TemplateFieldSchemaReturn], status_code=200)
+    async def fields_by_template(self, template_id: int, session: AsyncSession = Depends(get_async_session)):
+        return await get_fields_by_template(session, template_id)

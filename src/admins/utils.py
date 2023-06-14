@@ -9,6 +9,7 @@ from sqlalchemy import select
 from pydantic.error_wrappers import ValidationError
 from pydantic import BaseModel
 
+
 async def get_obj(model: Base, session: AsyncSession, id: int) -> Base:
     query = select(model).where(model.id == id)
     result = await session.execute(query)
@@ -28,6 +29,7 @@ async def validate_template_field_answer_value(template_field: TemplateField, va
         if template_field.required and value["name"] == "":
             raise HTTPException(status_code=400, detail={f"value": "This field is required"})
 
+
 async def validate_by_pydantic_schema(schema: BaseModel, value: dict) -> None:
     try:
         schema(**value)
@@ -35,3 +37,10 @@ async def validate_by_pydantic_schema(schema: BaseModel, value: dict) -> None:
         raise HTTPException(status_code=400, detail=e.errors())
     except Exception:
         raise HTTPException(status_code=400, detail={"uknown_error": "uknown error when validating"})
+
+
+async def get_fields_by_template(session: AsyncSession, template_id: int):
+    query = select(TemplateField).where(TemplateField.template_id == template_id)
+    result = await session.execute(query)
+    objs = result.scalars().all()
+    return objs
