@@ -131,3 +131,7 @@ class SearchingSchema(BaseModel):
 
 class TemplateFilterSchema(BaseModel):
     has_fields: Optional[bool] = None
+
+
+class ReadyAnswerFilterSchema(BaseModel):
+    category_id: Optional[int] = None

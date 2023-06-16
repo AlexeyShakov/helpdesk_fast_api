@@ -6,8 +6,9 @@ from fastapi_utils.inferring_router import InferringRouter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from admins.filters import ReadyAnswerFilter
 from admins.models import ReadyAnswer, Category
-from admins.schemas import ReadyAnswerSchemaCreate, ReadyAnswerSchemaReturn, SearchingSchema
+from admins.schemas import ReadyAnswerSchemaCreate, ReadyAnswerSchemaReturn, SearchingSchema, ReadyAnswerFilterSchema
 from crud_handler import BaseHandler
 from database import get_async_session
 
@@ -20,7 +21,7 @@ class TemplateView(BaseHandler):
     session: AsyncSession = Depends(get_async_session)
 
     def __init__(self):
-        super().__init__(ReadyAnswer)
+        super().__init__(ReadyAnswer, ReadyAnswerFilter)
 
     @ready_answers_router.post(f"{ROUTE}/", response_model=ReadyAnswerSchemaReturn, status_code=201)
     async def create_ready_answer(self, ready_answer_object: ReadyAnswerSchemaCreate):
@@ -32,6 +33,7 @@ class TemplateView(BaseHandler):
     @ready_answers_router.get(f"{ROUTE}/", response_model=List[ReadyAnswerSchemaReturn], status_code=200)
     async def get_ready_answers(self,
                                 searching_params: SearchingSchema = Depends(SearchingSchema),
+                                filter_params: ReadyAnswerFilterSchema = Depends(ReadyAnswerFilterSchema),
                                 offset: int = 0,
                                 limit: int = 5):
         search_fields = {
@@ -39,8 +41,8 @@ class TemplateView(BaseHandler):
             "related": []
         }
         query = select(self.model).join(Category)
-
         return await self.list(query=query,
+                               filter_params=filter_params.dict(),
                                searching_params=searching_params.dict(),
                                search_fields=search_fields,
                                session=self.session,

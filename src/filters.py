@@ -28,22 +28,20 @@ class BaseFilter:
         """
         dafault_filters = []
         custom_filters = []
-        print("kek", fields)
         for field, value in fields.items():
             # The name of filter fields in children classes have to follow this pattern <some_name_filter>
             needed_filter_field: Field = getattr(self, f"{field}_filter")
             if not needed_filter_field.method:
-                # Собираем все дефолтные поля, чтобы разом отфильтровать кверисет
-                # dafault_filters.append((field, value, self.operator_mapping[needed_filter_field.filter_param]))
+                # Gather all default fields to filter queryset by all filters at once
                 dafault_filters.append(
                     DefaultFilterParam(field, value, self.operator_mapping[needed_filter_field.filter_param])
                 )
             else:
                 if value is None:
-                    # Для параметров данного типа может быть три значения: True, False и None
+                    # Three possible values: None, False and True
                     continue
                 else:
-                    # The name of filter fields for custom filters in children classes have to follow this pattern <some_name_filter>
+                    # The names of filter fields for custom filters in children classes have to follow this pattern <some_name_filter>
                     needed_method = getattr(self, f"get_{field}")
                     custom_filters.append(needed_method(value))
         needed_filters = []

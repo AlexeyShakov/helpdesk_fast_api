@@ -1,6 +1,6 @@
 from typing import Optional
 from sqlalchemy.sql.selectable import Exists
-from admins.models import Topic, Template
+from admins.models import Topic, Template, ReadyAnswer
 from fields import Field
 from filters import BaseFilter
 
@@ -35,3 +35,13 @@ class TemplateFilter(BaseFilter):
         if value:
             return self.Meta.model.template_fields != None
         return None
+
+
+class ReadyAnswerFilter(BaseFilter):
+    category_id_filter = Field(filter_param="equal")
+
+    class Meta:
+        model = ReadyAnswer
+
+    def __init__(self, category_id: Optional[str] = None):
+        self.category_id = category_id
