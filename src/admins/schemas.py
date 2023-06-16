@@ -1,16 +1,25 @@
 from typing import Optional
 
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, validator
 
-from admins.enums import TypeChoices
-from admins.models import TemplateFieldChoices, TemplateField
+from admins.enums import TypeChoices, TopicOrderingChoices, CategoryOrderingChoices, TemplateOrderingChoices
+from admins.models import TemplateFieldChoices
 
 
 class TopicSchemaCreate(BaseModel):
     name: str
 
+
 class TopicSchemaReturn(TopicSchemaCreate):
     id: int
+
+    class Config:
+        orm_mode = True
+
+
+class TopicListSchemaReturn(TopicSchemaReturn):
+    id: int
+    category_count: int
 
     class Config:
         orm_mode = True
@@ -22,6 +31,7 @@ class TemplateSchemaCreate(BaseModel):
 
 class TemplateSchemaReturn(TemplateSchemaCreate):
     id: int
+
     # Нужно еще как-то возвращать все TemplateField, связанные с Template
     class Config:
         orm_mode = True
@@ -32,6 +42,13 @@ class TimeSchema(BaseModel):
     type: TypeChoices
 
 
+class CategoryOnlyIDSchema(BaseModel):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
 class CategorySchemaCreate(BaseModel):
     name: str
     topic: TopicSchemaReturn
@@ -39,20 +56,17 @@ class CategorySchemaCreate(BaseModel):
     time_of_life: TimeSchema
     notification_repeat: TimeSchema
 
-class CategorySchemaReturn(CategorySchemaCreate):
-    id: int
 
-    class Config:
-        orm_mode = True
+class CategorySchemaReturn(CategoryOnlyIDSchema, CategorySchemaCreate):
+    pass
 
 
 class NameSchema(BaseModel):
     name: str
 
+
 class SelectDataSchema(NameSchema):
     index: int
-
-
 
 
 class TemplateFieldSchemaCreate(BaseModel):
@@ -82,14 +96,42 @@ class TemplateFieldSchemaReturn(TemplateFieldSchemaCreate):
         orm_mode = True
 
 
-class TemplateFieldAnswerSchemaCreate(BaseModel):
-    template_field: TemplateFieldSchemaReturn
-    label: str
-    value: dict
+class ReadyAnswerSchemaCreate(BaseModel):
+    answer_text: str
+    category: CategoryOnlyIDSchema
 
 
-class TemplateFieldAnswerSchemaReturn(TemplateFieldAnswerSchemaCreate):
+class ReadyAnswerSchemaReturn(ReadyAnswerSchemaCreate):
     id: int
 
     class Config:
         orm_mode = True
+
+
+class TopicFilterSchema(BaseModel):
+    name: Optional[str] = None
+    has_categories: Optional[bool] = None
+
+
+class TopicOrderingSchema(BaseModel):
+    ordering: Optional[TopicOrderingChoices] = None
+
+
+class CategoryOrderingSchema(BaseModel):
+    ordering: Optional[CategoryOrderingChoices] = None
+
+
+class TemplateOrderingSchema(BaseModel):
+    ordering: Optional[TemplateOrderingChoices] = None
+
+
+class SearchingSchema(BaseModel):
+    search: Optional[str] = None
+
+
+class TemplateFilterSchema(BaseModel):
+    has_fields: Optional[bool] = None
+
+
+class ReadyAnswerFilterSchema(BaseModel):
+    category_id: Optional[int] = None

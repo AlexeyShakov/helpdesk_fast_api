@@ -1,10 +1,28 @@
-from fastapi import FastAPI
-from admins.endpoints import router_category, router_topic, router_template_field, router_template, router_template_field_answer
+from fastapi import FastAPI, Request
+from starlette.responses import JSONResponse
 
-app = FastAPI()
+from admins.endpoints.categories import category_router
+from admins.endpoints.ready_answers import ready_answers_router
+from admins.endpoints.template_fields import template_fields_router
+from admins.endpoints.templates import template_router
+from admins.endpoints.topics import topic_router
+from authentication import BasicAuthBackend
+from starlette.middleware import Middleware
+from starlette.middleware.authentication import AuthenticationMiddleware
 
-app.include_router(router_topic)
-app.include_router(router_template)
-app.include_router(router_category)
-app.include_router(router_template_field)
-app.include_router(router_template_field_answer)
+
+def on_auth_error(request: Request, exc: Exception):
+    return JSONResponse({"error": str(exc)}, status_code=401)
+
+
+middleware = [
+    Middleware(AuthenticationMiddleware, backend=BasicAuthBackend(), on_error=on_auth_error)
+]
+
+app = FastAPI(middleware=middleware)
+
+app.include_router(topic_router)
+app.include_router(template_router)
+app.include_router(category_router)
+app.include_router(template_fields_router)
+app.include_router(ready_answers_router)
