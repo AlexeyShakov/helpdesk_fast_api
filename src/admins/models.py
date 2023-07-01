@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 class Topic(Base):
     __tablename__ = "topics"
     id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
+    name = Column("name", String(100), nullable=False, unique=True)
     # Для связи один ко многим
     categories = relationship("Category", back_populates="topic")
 
@@ -19,7 +19,7 @@ class Topic(Base):
 class Template(Base):
     __tablename__ = "templates"
     id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
+    name = Column("name", String(100), nullable=False, unique=True)
 
     categories = relationship("Category", back_populates="template")
     template_fields = relationship("TemplateField", cascade="all,delete", back_populates="template")
@@ -28,7 +28,7 @@ class Template(Base):
 class Category(Base):
     __tablename__ = "categories"
     id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
+    name = Column("name", String(100), nullable=False, unique=True)
     time_of_life = Column(JSON, nullable=False)
     notification_repeat = Column(JSON, nullable=False)
     topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
