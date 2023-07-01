@@ -22,10 +22,13 @@ class BaseHandler:
         self.model = model
         self.filter_class = filter_class
 
-    async def create(self, session: AsyncSession, data: dict) -> Base:
+    async def create(self, session: AsyncSession, data: dict, object_name: Optional[str] = None) -> Base:
         obj = self.model(**data)
         session.add(obj)
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            raise HTTPException(status_code=500, detail=f"{object_name} with such parameters already exists")
         await session.refresh(obj)
         return obj
 

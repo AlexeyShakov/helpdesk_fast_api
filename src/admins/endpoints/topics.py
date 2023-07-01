@@ -26,7 +26,7 @@ class TopicView(BaseHandler):
 
     @topic_router.post(f"{ROUTE}/", response_model=TopicSchemaReturn, status_code=201)
     async def create_item(self, topic_object: TopicSchemaCreate):
-        return await self.create(self.session, topic_object.dict())
+        return await self.create(self.session, topic_object.dict(), object_name="Topic")
 
     @topic_router.get(f"{ROUTE}/", response_model=List[TopicListSchemaReturn], status_code=200)
     async def get_topics(self,

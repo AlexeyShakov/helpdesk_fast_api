@@ -10,7 +10,7 @@ from authentication import BasicAuthBackend
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 
-from staff.endpoints import group_router
+from staff.endpoints import group_router, user_router
 
 
 def on_auth_error(request: Request, exc: Exception):
@@ -30,3 +30,4 @@ app.include_router(template_fields_router)
 app.include_router(ready_answers_router)
 
 app.include_router(group_router)
+app.include_router(user_router)

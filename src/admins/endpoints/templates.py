@@ -27,7 +27,7 @@ class TemplateView(BaseHandler):
 
     @template_router.post(f"{ROUTE}/", response_model=TemplateSchemaReturn, status_code=201)
     async def create_item(self, template_object: TemplateSchemaCreate):
-        return await self.create(self.session, template_object.dict())
+        return await self.create(self.session, template_object.dict(), object_name="Template")
 
     @template_router.get(f"{ROUTE}/", response_model=List[TemplateSchemaReturn], status_code=201)
     async def get_templates(

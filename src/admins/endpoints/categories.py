@@ -29,7 +29,7 @@ class CategoryView(BaseHandler):
         template_obj = await self.get_obj(Template, self.session, category_dict.get("template").get("id"))
         category_dict["topic"] = topic_obj
         category_dict["template"] = template_obj
-        return await self.create(self.session, category_dict)
+        return await self.create(self.session, category_dict, object_name="Category")
 
     @category_router.get(f"{ROUTE}", response_model=List[CategorySchemaReturn], status_code=200)
     async def read_categories(
