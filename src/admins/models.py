@@ -10,6 +10,7 @@ class Topic(Base):
     name = Column("name", String(100), nullable=False, unique=True)
     # Для связи один ко многим
     categories = relationship("Category", back_populates="topic")
+    tickets = relationship("Ticket", back_populates="topic")
 
     @property
     def category_count(self) -> int:
@@ -38,6 +39,7 @@ class Category(Base):
     topic = relationship("Topic", back_populates="categories", lazy="joined")
     ready_answers = relationship("ReadyAnswer", back_populates="category")
     users = relationship("User", back_populates="category")
+    tickets = relationship("Ticket", back_populates="category")
 
 class TemplateField(Base):
     __tablename__ = "template_fields"

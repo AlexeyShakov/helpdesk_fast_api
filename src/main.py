@@ -11,6 +11,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from staff.endpoints import group_router, user_router
+from tickets.endpoints import ticket_router
 
 
 def on_auth_error(request: Request, exc: Exception):
@@ -31,3 +32,5 @@ app.include_router(ready_answers_router)
 
 app.include_router(group_router)
 app.include_router(user_router)
+
+app.include_router(ticket_router)

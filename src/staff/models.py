@@ -32,6 +32,4 @@ class User(Base):
 
     group = relationship("Group", back_populates="users", lazy="joined")
     category = relationship("Category", back_populates="users", lazy="joined")
-
-    # I have to link Category and User with foreign key here. So User might be stuff only in one category, or it's
-    # a user who uses helpdesk(category == None)
+    # tickets = relationship("Ticket", back_populates="User")
