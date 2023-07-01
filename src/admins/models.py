@@ -37,7 +37,7 @@ class Category(Base):
     template = relationship("Template", back_populates="categories", lazy="joined")
     topic = relationship("Topic", back_populates="categories", lazy="joined")
     ready_answers = relationship("ReadyAnswer", back_populates="category")
-
+    users = relationship("User", back_populates="category")
 
 class TemplateField(Base):
     __tablename__ = "template_fields"

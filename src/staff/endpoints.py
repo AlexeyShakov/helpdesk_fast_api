@@ -3,6 +3,8 @@ from typing import List
 from fastapi_utils.inferring_router import InferringRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+
+from admins.models import Category
 from crud_handler import BaseHandler
 from database import get_async_session
 from fastapi_utils.cbv import cbv
@@ -62,5 +64,7 @@ class UserView(BaseHandler):
     async def create_item(self, user_object: UserSchemaCreate):
         user_dict = user_object.dict()
         group_obj = await self.get_obj(Group, self.session, user_dict.get("group").get("id"))
+        category_object = await self.get_obj(Category, self.session, user_dict.get("category").get("id"))
         user_dict["group"] = group_obj
+        user_dict["category"] = category_object
         return await self.create(self.session, user_dict, object_name="User")

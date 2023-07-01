@@ -24,13 +24,14 @@ class User(Base):
     surname = Column("surname", String(200), nullable=False)
     phone = Column("phone", String(200), nullable=False, unique=True)
     email = Column("email", String(200), nullable=False, unique=True)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
     role = Column(Enum(UserRoleChoices), nullable=True)
-
     # This field corresponds to the id from the main service
     main_id = Column(Integer, nullable=False)
 
     group = relationship("Group", back_populates="users", lazy="joined")
+    category = relationship("Category", back_populates="users", lazy="joined")
 
     # I have to link Category and User with foreign key here. So User might be stuff only in one category, or it's
     # a user who uses helpdesk(category == None)

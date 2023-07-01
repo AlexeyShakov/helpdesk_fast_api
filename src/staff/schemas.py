@@ -1,5 +1,8 @@
-from pydantic import BaseModel
+import re
 
+from pydantic import BaseModel, EmailStr, validator
+
+from admins.schemas import CategoryOnlyIDSchema
 from staff.enums import UserRoleChoices
 
 
@@ -20,11 +23,17 @@ class UserSchemaCreate(BaseModel):
     first_name: str
     surname: str
     phone: str
-    email: str
+    email: EmailStr
     group: GroupSchemaReturn
     main_id: int
     role: UserRoleChoices
+    category: CategoryOnlyIDSchema
 
+    @validator("phone")
+    def validate_phone(cls, field_value: str):
+        reg = re.compile(r"^\+\d{5,20}$")
+        if not re.match(reg, field_value):
+            raise ValueError("The phone number is not valid")
 
 class UserSchemaReturn(UserSchemaCreate):
     id: int
