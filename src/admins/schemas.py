@@ -29,6 +29,9 @@ class TopicListSchemaReturn(TopicSchemaReturn):
 class TopicSchemaForTicket(TopicSchemaOnlyID):
     name: str
 
+    class Config:
+        orm_mode = True
+
 
 class TemplateSchemaCreate(BaseModel):
     name: str
@@ -68,6 +71,7 @@ class CategorySchemaReturn(CategoryOnlyIDSchema, CategorySchemaCreate):
 
 class CategorySchemaForTicket(CategoryOnlyIDSchema):
     name: str
+    template: Optional[TemplateSchemaReturn]
 
 
 class NameSchema(BaseModel):

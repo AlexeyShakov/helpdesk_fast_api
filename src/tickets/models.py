@@ -21,7 +21,6 @@ class Ticket(Base):
     in_work_date = Column(DateTime, nullable=True, default=None)
     closed_date = Column(DateTime, nullable=True, default=None)
     is_overdue = Column(Boolean, default=False)
-    # answers
     # files
 
     specialist_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -33,3 +32,4 @@ class Ticket(Base):
     creator = relationship("User", lazy="joined", foreign_keys=[creator_id])
     category = relationship("Category", back_populates="tickets", lazy="joined")
     topic = relationship("Topic", back_populates="tickets", lazy="joined")
+    template_field_answers = relationship("TemplateFieldAnswer", cascade="all,delete", back_populates="ticket")

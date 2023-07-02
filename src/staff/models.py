@@ -32,4 +32,3 @@ class User(Base):
 
     group = relationship("Group", back_populates="users", lazy="joined")
     category = relationship("Category", back_populates="users", lazy="joined")
-    # tickets = relationship("Ticket", back_populates="User")

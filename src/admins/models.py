@@ -41,6 +41,7 @@ class Category(Base):
     users = relationship("User", back_populates="category")
     tickets = relationship("Ticket", back_populates="category")
 
+
 class TemplateField(Base):
     __tablename__ = "template_fields"
     id = Column(Integer, primary_key=True)
@@ -61,8 +62,10 @@ class TemplateFieldAnswer(Base):
     label = Column(String(200), nullable=False)
     value = Column(JSON)
     template_field_id = Column(Integer, ForeignKey("template_fields.id"))
+    ticket_id = Column(Integer, ForeignKey("tickets.id"))
 
     template_field = relationship("TemplateField", back_populates="template_field_answers", lazy="joined")
+    ticket = relationship("Ticket", back_populates="template_field_answers", lazy="joined")
 
 
 class ReadyAnswer(Base):
