@@ -22,8 +22,14 @@ class BaseHandler:
         self.model = model
         self.filter_class = filter_class
 
-    async def create(self, session: AsyncSession, data: dict, object_name: Optional[str] = None) -> Base:
-        obj = self.model(**data)
+    async def create(
+            self,
+            session: AsyncSession,
+            data: dict,
+            alchemy_model: Base = None,
+            object_name: Optional[str] = None) -> Base:
+        model = self.model if alchemy_model is None else alchemy_model
+        obj = model(**data)
         session.add(obj)
         try:
             await session.commit()

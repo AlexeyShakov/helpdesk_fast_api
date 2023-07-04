@@ -40,10 +40,8 @@ class TicketView(BaseHandler):
                                                        answer.get("template_field"))
             answer["template_field"] = template_field_object
             answer["ticket"] = ticket
-            obj = TemplateFieldAnswer(**answer)
-            self.session.add(obj)
-            await self.session.commit()
-            await self.session.refresh(obj)
-            answer_objects.append(obj)
+            answer_objects.append(
+                await self.create(self.session, answer, TemplateFieldAnswer, object_name="User")
+            )
         ticket.answers = answer_objects
         return ticket
