@@ -2,10 +2,8 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
-from admins.schemas import TopicSchemaReturn, CategorySchemaReturn, TopicSchemaForTicket, CategorySchemaForTicket, \
+from admins.schemas import TopicSchemaForTicket, CategorySchemaForTicket, \
     TemplateFieldSchemaReturn
-from staff.schemas import UserSchemaReturn
-from tickets.enums import TicketStatusChoice, GradeChoice
 
 
 class ValueSchema(BaseModel):
@@ -15,8 +13,8 @@ class ValueSchema(BaseModel):
 
 class TemplateFieldAnswersSchemaCreate(BaseModel):
     label: str
-    value: ValueSchema
-    template_field: int
+    value: Optional[ValueSchema]
+    template_field: TemplateFieldSchemaReturn
 
 
 class TemplateFieldAnswersSchemaReturn(TemplateFieldAnswersSchemaCreate):
