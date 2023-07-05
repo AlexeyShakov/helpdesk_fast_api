@@ -76,4 +76,5 @@ class CategoryView(BaseHandler):
             id=category_id,
             data=category_dict,
             fk_obj=fk_obj,
-            update_fk=True)
+            update_fk=True
+        )

@@ -4,6 +4,7 @@ from sqlalchemy.engine.cursor import CursorResult
 from sqlalchemy import select, update, exc, or_
 from sqlalchemy import desc, asc
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,5 +1,7 @@
 from typing import Optional, List
 
+from fastapi import HTTPException
+from pydantic import validator
 from pydantic import BaseModel
 
 from admins.schemas import TopicSchemaForTicket, CategorySchemaForTicket, \
@@ -34,8 +36,18 @@ class TicketBaseSchema(BaseModel):
 
 
 class TicketSchemaCreate(TicketBaseSchema):
-    answers: List[TemplateFieldAnswersSchemaCreate]
+    answers: Optional[List[TemplateFieldAnswersSchemaCreate]]
 
+    @validator("answers")
+    def validate_data(cls, value: Optional[dict]) -> dict:
+        if not value:
+            return []
+        for el in value:
+            answer_data = el.dict()
+            template_field = answer_data.get("template_field")
+            if template_field["required"] and (not answer_data["value"] or not answer_data["value"]["name"]):
+                raise HTTPException(status_code=500, detail=f"This field \"{answer_data['label']}\" is required")
+            return value
 
 class TicketSchemaReturn(TicketBaseSchema):
     id: int
