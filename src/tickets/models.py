@@ -32,4 +32,4 @@ class Ticket(Base):
     creator = relationship("User", lazy="joined", foreign_keys=[creator_id])
     category = relationship("Category", back_populates="tickets", lazy="joined")
     topic = relationship("Topic", back_populates="tickets", lazy="joined")
-    template_field_answers = relationship("TemplateFieldAnswer", cascade="all,delete", back_populates="ticket")
+    answers = relationship("TemplateFieldAnswer", cascade="all,delete", back_populates="ticket")

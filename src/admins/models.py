@@ -65,7 +65,7 @@ class TemplateFieldAnswer(Base):
     ticket_id = Column(Integer, ForeignKey("tickets.id"))
 
     template_field = relationship("TemplateField", back_populates="template_field_answers", lazy="joined")
-    ticket = relationship("Ticket", back_populates="template_field_answers", lazy="joined")
+    ticket = relationship("Ticket", back_populates="answers", lazy="joined")
 
 
 class ReadyAnswer(Base):

@@ -30,7 +30,7 @@ class TemplateView(BaseHandler):
         return await self.create(self.session, template_object.dict(), object_name="Template")
 
     @template_router.get(f"{ROUTE}/", response_model=List[TemplateSchemaReturn], status_code=201)
-    async def get_templates(
+    async def read_templates(
             self,
             ordering_params: TemplateOrderingSchema = Depends(TemplateOrderingSchema),
             searching_params: SearchingSchema = Depends(SearchingSchema),
@@ -54,7 +54,8 @@ class TemplateView(BaseHandler):
 
     @template_router.get(f"{ROUTE}/" + "{template_id}", response_model=TemplateSchemaReturn, status_code=200)
     async def read_template(self, template_id: int):
-        return await self.retrieve(self.session, template_id)
+        query = select(self.model)
+        return await self.retrieve(query, self.session, template_id)
 
     @template_router.delete(f"{ROUTE}/" + "{template_id}", status_code=204)
     async def delete_template(self, template_id: int):

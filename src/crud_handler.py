@@ -69,11 +69,11 @@ class BaseHandler:
             needed_objects = result.scalars().all()
         return needed_objects
 
-    async def retrieve(self, session: AsyncSession, obj_id: int) -> Base:
-        return await self.get_obj(self.model, session, obj_id)
+    async def retrieve(self, query: Select, session: AsyncSession, obj_id: int) -> Base:
+        return await self.get_obj(query, session, obj_id)
 
     async def delete(self, session: AsyncSession, obj_id: int) -> Base:
-        obj = await self.get_obj(self.model, session, obj_id)
+        obj = await self.get_obj(select(self.model), session, obj_id)
         try:
             await session.delete(obj)
             await session.commit()
@@ -81,8 +81,8 @@ class BaseHandler:
             raise HTTPException(status_code=500,
                                 detail="This object has existing child objects. Deletion is not possible")
 
-    async def get_obj(self, model: Base, session: AsyncSession, obj_id: int) -> Base:
-        query = select(model).filter_by(id=obj_id)
+    async def get_obj(self, query: Select, session: AsyncSession, obj_id: int) -> Base:
+        query = query.filter_by(id=obj_id)
         result = await session.execute(query)
         obj = result.scalars().first()
         if not obj:
@@ -98,7 +98,7 @@ class BaseHandler:
             update_fk: bool = False
     ):
         data.pop("id")
-        obj = await self.get_obj(self.model, session, id)
+        obj = await self.get_obj(select(self.model), session, id)
         if update_fk:
             for k, v in fk_obj.items():
                 setattr(obj, k, v)
