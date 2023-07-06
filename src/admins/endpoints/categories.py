@@ -71,10 +71,12 @@ class CategoryView(BaseHandler):
         topic_data = category_dict.pop("topic")
         template_data = category_dict.pop("template")
         fk_obj = {"topic_id": topic_data["id"], "template_id": template_data["id"]}
-        return await self.update(
+        category_obj = await self.update(
             session=self.session,
             id=category_id,
             data=category_dict,
             fk_obj=fk_obj,
             update_fk=True
         )
+        await self.session.commit()
+        return category_obj

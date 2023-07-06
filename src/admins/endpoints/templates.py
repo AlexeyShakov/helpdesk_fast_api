@@ -63,7 +63,9 @@ class TemplateView(BaseHandler):
 
     @template_router.put(f"{ROUTE}/" + "{template_id}", response_model=TemplateSchemaReturn, status_code=200)
     async def update_template(self, template_id: int, template: TemplateSchemaReturn):
-        return await self.update(self.session, template_id, template.dict())
+        template_obj = await self.update(self.session, template_id, template.dict())
+        await self.session.commit()
+        return template_obj
 
     @template_router.get(f"{ROUTE}/" + "{template_id}/template_fields", response_model=List[TemplateFieldSchemaReturn], status_code=200)
     async def fields_by_template(self, template_id: int, session: AsyncSession = Depends(get_async_session)):

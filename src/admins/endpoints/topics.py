@@ -53,4 +53,6 @@ class TopicView(BaseHandler):
 
     @topic_router.put(f"{ROUTE}/" + "{topic_id}", response_model=TopicSchemaReturn, status_code=200)
     async def update_topic(self, topic_id: int, topic: TopicSchemaReturn):
-        return await self.update(self.session, topic_id, topic.dict())
+        topic_obj = await self.update(self.session, topic_id, topic.dict())
+        await self.session.commit()
+        return topic_obj

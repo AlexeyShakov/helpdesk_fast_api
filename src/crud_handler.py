@@ -96,21 +96,21 @@ class BaseHandler:
             id: int,
             data: dict,
             fk_obj: dict = None,
-            update_fk: bool = False
+            update_fk: bool = False,
+            alchemy_model: Base = None,
     ):
+        model = self.model if alchemy_model is None else alchemy_model
         data.pop("id")
         obj = await self.get_obj(select(self.model), session, id)
         if update_fk:
             for k, v in fk_obj.items():
                 setattr(obj, k, v)
-        stmt = update(self.model).filter_by(id=id).values(**data).execution_options(synchronize_session="fetch")
+        stmt = update(model).filter_by(id=id).values(**data).execution_options(synchronize_session="fetch")
         try:
             await session.execute(stmt)
         except IntegrityError:
             raise HTTPException(status_code=500,
                                 detail=f"There is no object with id={v} for {k}")
-        await session.commit()
-        await session.refresh(obj)
         return obj
 
     async def order_query(self, query, ordering_field: str, joined_ordering: Optional[dict]):

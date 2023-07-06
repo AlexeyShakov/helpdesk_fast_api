@@ -38,10 +38,12 @@ class TemplateView(BaseHandler):
         template_field_dict = template_field.dict()
         template_data = template_field_dict.pop("template")
         fk_obj = {"template_id": template_data["id"]}
-        return await self.update(
+        template_field_obj = await self.update(
             session=self.session,
             id=template_field_id,
             data=template_field_dict,
             fk_obj=fk_obj,
             update_fk=True
         )
+        await self.session.commit()
+        return template_field_obj

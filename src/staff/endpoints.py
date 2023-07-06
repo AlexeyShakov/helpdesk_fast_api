@@ -32,8 +32,8 @@ class GroupView(BaseHandler):
 
     @group_router.get(f"{ROUTE}/", response_model=List[GroupSchemaReturn], status_code=200)
     async def read_groups(self,
-                         offset: int = 0,
-                         limit: int = 5):
+                          offset: int = 0,
+                          limit: int = 5):
         query = select(self.model)
         return await self.list(query=query,
                                session=self.session,
@@ -50,8 +50,10 @@ class GroupView(BaseHandler):
         return await self.delete(self.session, group_id)
 
     @group_router.put(f"{ROUTE}/" + "{group_id}", response_model=GroupSchemaReturn, status_code=200)
-    async def update_topic(self, group_id: int, group: GroupSchemaReturn):
-        return await self.update(self.session, group_id, group.dict())
+    async def update_group(self, group_id: int, group: GroupSchemaReturn):
+        group_obj = await self.update(self.session, group_id, group.dict())
+        await self.session.commit()
+        return group_obj
 
 
 @cbv(user_router)
