@@ -73,7 +73,7 @@ class BaseHandler:
         return await self.get_obj(query, session, {"id": obj_id})
 
     async def delete(self, session: AsyncSession, obj_id: int) -> Base:
-        obj = await self.get_obj(select(self.model), session, obj_id)
+        obj = await self.get_obj(select(self.model), session, {"id": obj_id})
         try:
             await session.delete(obj)
             await session.commit()

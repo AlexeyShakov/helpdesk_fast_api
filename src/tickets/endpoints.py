@@ -22,9 +22,6 @@ from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSc
 ticket_router = InferringRouter(tags=["Ticket"])
 ROUTE = "/api/tickets"
 
-ticket_file_router = InferringRouter(tags=["TicketFile"])
-
-
 
 @cbv(ticket_router)
 class TicketView(BaseHandler):
