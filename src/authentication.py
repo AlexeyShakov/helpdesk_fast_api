@@ -11,6 +11,9 @@ class User(SimpleUser):
 class BasicAuthBackend(AuthenticationBackend):
     async def authenticate(self, conn):
         if "Authorization" not in conn.headers:
+            url = conn.url.path
+            if url.split("/")[-1] in ("docs", "openapi.json"):
+                return
             raise AuthenticationError("No token received")
         auth = conn.headers["Authorization"]
         try:

@@ -33,3 +33,14 @@ class Ticket(Base):
     category = relationship("Category", back_populates="tickets", lazy="joined")
     topic = relationship("Topic", back_populates="tickets", lazy="joined")
     answers = relationship("TemplateFieldAnswer", cascade="all,delete", back_populates="ticket")
+    ticket_files = relationship("TicketFile", cascade="all,delete", back_populates="ticket")
+
+class TicketFile(Base):
+    __tablename__ = "ticket_files"
+    id = Column(Integer, primary_key=True)
+    path = Column(Text, nullable=False)
+    name = Column("title", String(200), nullable=False)
+
+    ticket_id = Column(Integer, ForeignKey("tickets.id"), nullable=True, default=None)
+    ticket = relationship("Ticket", back_populates="ticket_files", lazy="joined")
+

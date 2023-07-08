@@ -50,10 +50,22 @@ class TicketSchemaCreate(TicketBaseSchema):
             return value
 
 
-class TicketSchemaReturn(TicketBaseSchema):
+class TicketSchemaOnlyID(BaseModel):
     id: int
+
+
+class TicketSchemaReturn(TicketBaseSchema, TicketSchemaOnlyID):
     answers: List[TemplateFieldAnswersSchemaReturn]
     creator: UserSchemaReturn
+
+    class Config:
+        orm_mode = True
+
+
+class TicketFileSchemaReturn(BaseModel):
+    id: int
+    path: str
+    name: str
 
     class Config:
         orm_mode = True

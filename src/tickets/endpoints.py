@@ -1,5 +1,7 @@
+import uuid
 from typing import List
 
+import aiofiles
 from fastapi_utils.inferring_router import InferringRouter
 from fastapi_utils.cbv import cbv
 from sqlalchemy import select
@@ -8,16 +10,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from admins.models import Category, Topic, TemplateField, TemplateFieldAnswer
+
 from crud_handler import BaseHandler
 from database import get_async_session
-from fastapi import Depends, Request, HTTPException
+from fastapi import Depends, Request, HTTPException, UploadFile
 
 from staff.models import User
-from tickets.models import Ticket
-from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate
+from tickets.models import Ticket, TicketFile
+from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn
 
 ticket_router = InferringRouter(tags=["Ticket"])
 ROUTE = "/api/tickets"
+
+ticket_file_router = InferringRouter(tags=["TicketFile"])
+
 
 
 @cbv(ticket_router)
