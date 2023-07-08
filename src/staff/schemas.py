@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, validator
 
@@ -16,26 +17,29 @@ class GroupSchemaReturn(GroupSchemaCreate):
     class Config:
         orm_mode = True
 
+class UserSchemaPrivateInfo(BaseModel):
+    phone: str
+    email: EmailStr
 
-class UserSchemaCreate(BaseModel):
+class UserSchemaBase(BaseModel):
     username: str
     last_name: str
     first_name: str
     surname: str
-    phone: str
-    email: EmailStr
-    group: GroupSchemaReturn
+    group: Optional[GroupSchemaReturn]
     main_id: int
-    role: UserRoleChoices
-    category: CategoryOnlyIDSchema
+    role: Optional[UserRoleChoices]
+    category: Optional[CategoryOnlyIDSchema]
 
+
+class UserSchemaCreate(UserSchemaBase, UserSchemaPrivateInfo):
     @validator("phone")
     def validate_phone(cls, field_value: str):
         reg = re.compile(r"^\+\d{5,20}$")
         if not re.match(reg, field_value):
             raise ValueError("The phone number is not valid")
 
-class UserSchemaReturn(UserSchemaCreate):
+class UserSchemaReturn(UserSchemaBase):
     id: int
 
     class Config:

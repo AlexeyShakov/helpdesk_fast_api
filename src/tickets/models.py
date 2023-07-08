@@ -24,7 +24,7 @@ class Ticket(Base):
     # files
 
     specialist_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    creator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
 

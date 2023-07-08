@@ -4,7 +4,6 @@ from sqlalchemy.engine.cursor import CursorResult
 from sqlalchemy import select, update, exc, or_
 from sqlalchemy import desc, asc
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import selectinload
 
 from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,7 +70,7 @@ class BaseHandler:
         return needed_objects
 
     async def retrieve(self, query: Select, session: AsyncSession, obj_id: int) -> Base:
-        return await self.get_obj(query, session, obj_id)
+        return await self.get_obj(query, session, {"id": obj_id})
 
     async def delete(self, session: AsyncSession, obj_id: int) -> Base:
         obj = await self.get_obj(select(self.model), session, obj_id)
@@ -82,8 +81,8 @@ class BaseHandler:
             raise HTTPException(status_code=500,
                                 detail="This object has existing child objects. Deletion is not possible")
 
-    async def get_obj(self, query: Select, session: AsyncSession, obj_id: int) -> Base:
-        query = query.filter_by(id=obj_id)
+    async def get_obj(self, query: Select, session: AsyncSession, obj_attrs: dict) -> Base:
+        query = query.filter_by(**obj_attrs)
         result = await session.execute(query)
         obj = result.scalars().first()
         if not obj:

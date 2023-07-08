@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.orm import selectinload
-from fastapi import Depends
+from fastapi import Depends, Request
 from sqlalchemy import select
 
 from admins.filters import TopicFilter
@@ -43,7 +43,8 @@ class TopicView(BaseHandler):
                                offset=offset)
 
     @topic_router.get(f"{ROUTE}/" + "{topic_id}", response_model=TopicSchemaReturn, status_code=200)
-    async def read_topic(self, topic_id: int):
+    async def read_topic(self, topic_id: int, request: Request):
+        print("request", request.user)
         query = select(self.model)
         return await self.retrieve(query, self.session, topic_id)
 

@@ -10,10 +10,11 @@ from sqlalchemy.orm import selectinload
 from admins.models import Category, Topic, TemplateField, TemplateFieldAnswer
 from crud_handler import BaseHandler
 from database import get_async_session
-from fastapi import Depends
+from fastapi import Depends, Request, HTTPException
 
+from staff.models import User
 from tickets.models import Ticket
-from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TemplateFieldAnswersSchemaReturn
+from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate
 
 ticket_router = InferringRouter(tags=["Ticket"])
 ROUTE = "/api/tickets"
@@ -27,28 +28,30 @@ class TicketView(BaseHandler):
         super().__init__(Ticket)
 
     @ticket_router.post(f"{ROUTE}/", response_model=TicketSchemaReturn, status_code=201)
-    async def create_item(self, ticket_object: TicketSchemaCreate):
+    async def create_item(self, ticket_object: TicketSchemaCreate, request: Request):
         ticket_dict = ticket_object.dict()
         answers_data = ticket_dict.pop("answers")
 
-        category_object = await self.get_obj(select(Category), self.session, ticket_dict.get("category").get("id"))
-        topic = await self.get_obj(select(Topic), self.session, ticket_dict.get("topic").get("id"))
+        category_object = await self.get_obj(select(Category), self.session,
+                                             {"id": ticket_dict.get("category").get("id")})
+        topic = await self.get_obj(select(Topic), self.session, {"id": ticket_dict.get("topic").get("id")})
 
         ticket_dict["topic"] = topic
         ticket_dict["category"] = category_object
+        ticket_dict["creator"] = await self._create_ticket_creator(request)
         ticket = await self.create(self.session, ticket_dict, object_name="User")
 
         if answers_data:
             for answer in answers_data:
                 template_field_object = await self.get_obj(select(TemplateField), self.session,
-                                                           answer.get("template_field").get("id"))
+                                                           {"id": answer.get("template_field").get("id")})
                 answer["template_field"] = template_field_object
                 answer["ticket"] = ticket
                 await self.create(self.session, answer, object_name="Answer", alchemy_model=TemplateFieldAnswer)
         # We cannot create an object and get access to related object at once(in this case it's reverse FK).
         # So we need to query one more time with join
         ticket_with_answers = select(self.model).options(selectinload(self.model.answers))
-        return await self.get_obj(ticket_with_answers, self.session, ticket.id)
+        return await self.get_obj(ticket_with_answers, self.session, {"id": ticket.id})
 
     @ticket_router.get(f"{ROUTE}/", response_model=List[TicketSchemaReturn], status_code=200)
     async def read_tickets(self, offset: int = 0, limit: int = 2):
@@ -101,3 +104,13 @@ class TicketView(BaseHandler):
                     data=el,
                     alchemy_model=TemplateFieldAnswer
                 )
+
+    async def _create_ticket_creator(self, request: Request) -> User:
+        try:
+            creator = await self.get_obj(select(User), self.session, {"main_id": request.user.id})
+        except HTTPException:
+            creator_dict = request.user.__dict__
+            creator_dict["main_id"] = creator_dict["id"]
+            del creator_dict["id"]
+            creator = await self.create(self.session, creator_dict, object_name="User", alchemy_model=User)
+        return creator

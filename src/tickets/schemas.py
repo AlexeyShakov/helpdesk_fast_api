@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from admins.schemas import TopicSchemaForTicket, CategorySchemaForTicket, \
     TemplateFieldSchemaReturn
+from staff.schemas import UserSchemaReturn
 
 
 class ValueSchema(BaseModel):
@@ -30,7 +31,6 @@ class TemplateFieldAnswersSchemaReturn(TemplateFieldAnswersSchemaCreate):
 class TicketBaseSchema(BaseModel):
     title: str
     description: str
-    # creator: UserSchemaReturn
     topic: TopicSchemaForTicket
     category: CategorySchemaForTicket
 
@@ -49,9 +49,11 @@ class TicketSchemaCreate(TicketBaseSchema):
                 raise HTTPException(status_code=500, detail=f"This field \"{answer_data['label']}\" is required")
             return value
 
+
 class TicketSchemaReturn(TicketBaseSchema):
     id: int
     answers: List[TemplateFieldAnswersSchemaReturn]
+    creator: UserSchemaReturn
 
     class Config:
         orm_mode = True
