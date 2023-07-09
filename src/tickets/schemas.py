@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from fastapi import HTTPException
 from pydantic import validator
@@ -28,6 +28,15 @@ class TemplateFieldAnswersSchemaReturn(TemplateFieldAnswersSchemaCreate):
         orm_mode = True
 
 
+class TicketFileSchemaReturn(BaseModel):
+    id: int
+    path: str
+    name: str
+
+    class Config:
+        orm_mode = True
+
+
 class TicketBaseSchema(BaseModel):
     title: str
     description: str
@@ -37,9 +46,10 @@ class TicketBaseSchema(BaseModel):
 
 class TicketSchemaCreate(TicketBaseSchema):
     answers: Optional[List[TemplateFieldAnswersSchemaCreate]]
+    ticket_files: Optional[List[TicketFileSchemaReturn]]
 
     @validator("answers")
-    def validate_data(cls, value: Optional[dict]) -> dict:
+    def validate_data(cls, value: Optional[dict]) -> Union[dict, list]:
         if not value:
             return []
         for el in value:
@@ -57,15 +67,7 @@ class TicketSchemaOnlyID(BaseModel):
 class TicketSchemaReturn(TicketBaseSchema, TicketSchemaOnlyID):
     answers: List[TemplateFieldAnswersSchemaReturn]
     creator: UserSchemaReturn
-
-    class Config:
-        orm_mode = True
-
-
-class TicketFileSchemaReturn(BaseModel):
-    id: int
-    path: str
-    name: str
+    ticket_files: Optional[List[TicketFileSchemaReturn]]
 
     class Config:
         orm_mode = True

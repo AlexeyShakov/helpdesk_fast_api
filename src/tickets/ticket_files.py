@@ -36,15 +36,22 @@ async def upload_file(incoming_file: UploadFile, session: AsyncSession = Depends
 async def download_file(
         ticket_file_id: int,
         session: AsyncSession = Depends(get_async_session)
-        ) -> FileResponse:
+) -> FileResponse:
     query = select(TicketFile)
     handler = BaseHandler(TicketFile)
     ticket_file = await handler.get_obj(query, session, {"id": ticket_file_id})
-    print("faa", ticket_file_id)
     return FileResponse(ticket_file.path, filename=ticket_file.name, media_type='multipart/form-data')
 
+
 @ticket_file_router.delete("/{ticket_file_id}", response_model=None, status_code=204,
-                        tags=["TicketFile"])
+                           tags=["TicketFile"])
 async def delete_ticket_file(ticket_file_id: int, session: AsyncSession = Depends(get_async_session)) -> None:
+    await _delete_file(ticket_file_id, session)
+
+
+async def _delete_file(ticket_file_id: int, session: AsyncSession = Depends(get_async_session)):
     handler = BaseHandler(TicketFile)
-    await handler.delete(session, ticket_file_id)
+    file_obj = await handler.get_obj(select(TicketFile), session, {"id": ticket_file_id})
+    os.remove(file_obj.path)
+    await session.delete(file_obj)
+    await session.commit()

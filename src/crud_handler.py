@@ -100,7 +100,7 @@ class BaseHandler:
     ):
         model = self.model if alchemy_model is None else alchemy_model
         data.pop("id")
-        obj = await self.get_obj(select(self.model), session, id)
+        obj = await self.get_obj(select(self.model), session, {"id": id})
         if update_fk:
             for k, v in fk_obj.items():
                 setattr(obj, k, v)

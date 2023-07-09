@@ -21,7 +21,6 @@ class Ticket(Base):
     in_work_date = Column(DateTime, nullable=True, default=None)
     closed_date = Column(DateTime, nullable=True, default=None)
     is_overdue = Column(Boolean, default=False)
-    # files
 
     specialist_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
