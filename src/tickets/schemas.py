@@ -67,7 +67,12 @@ class TicketSchemaOnlyID(BaseModel):
 class TicketSchemaReturn(TicketBaseSchema, TicketSchemaOnlyID):
     answers: List[TemplateFieldAnswersSchemaReturn]
     creator: UserSchemaReturn
+    specialist: Optional[UserSchemaReturn] = None
     ticket_files: Optional[List[TicketFileSchemaReturn]]
 
     class Config:
         orm_mode = True
+
+
+class AssignSpecialistSchema(BaseModel):
+    id: int

@@ -17,7 +17,7 @@ from fastapi import Depends, Request, HTTPException, UploadFile
 
 from staff.models import User
 from tickets.models import Ticket, TicketFile
-from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn
+from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn, AssignSpecialistSchema
 from tickets.ticket_files import _delete_file
 
 ticket_router = InferringRouter(tags=["Ticket"])
@@ -88,7 +88,7 @@ class TicketView(BaseHandler):
         ticket_obj = await self.get_obj(ticket_query, self.session, {"id": ticket_dict.get("id")})
         answers_from_ticket = ticket_obj.answers
         files_from_ticket = ticket_obj.ticket_files
-        await self._update_ready_answers(answers_from_ticket, answers)
+        await self._update_answers(answers_from_ticket, answers)
         await self._update_files(files_from_ticket, files, ticket_obj, self.session)
 
         topic_data = ticket_dict.pop("topic")
@@ -101,11 +101,24 @@ class TicketView(BaseHandler):
             fk_obj=fk_obj,
             update_fk=True
         )
-        ticket_with_related_models = select(self.model). \
+        ticket_with_related_models_query = select(self.model). \
             options(selectinload(self.model.answers)). \
             options(selectinload(self.model.ticket_files))
+
+        returning_ticket = await self.get_obj(ticket_with_related_models_query, self.session, {"id": ticket.id})
         await self.session.commit()
-        return await self.get_obj(ticket_with_related_models, self.session, {"id": ticket.id})
+        await self.session.refresh(returning_ticket)
+        return returning_ticket
+
+    @ticket_router.post(f"{ROUTE}/take_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
+    async def take_ticket(self, request: Request, ticket_id: int):
+        specialist = await self.get_obj(select(User), self.session, {"main_id": request.user.id})
+        return await self._add_specialist_to_ticket(specialist, ticket_id)
+
+    @ticket_router.post(f"{ROUTE}/assign_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
+    async def assign_specialist(self, ticket_id: int, specialist_id: AssignSpecialistSchema):
+        specialist = await self.get_obj(select(User), self.session, {"id": specialist_id.id})
+        return await self._add_specialist_to_ticket(specialist, ticket_id)
 
     async def _update_files(self,
                             files: List[TicketFile],
@@ -128,7 +141,7 @@ class TicketView(BaseHandler):
                 for el in files_for_adding_to_ticket:
                     await self._add_files_to_ticket(files_data[el], ticket)
 
-    async def _update_ready_answers(self, answers: List[TemplateFieldAnswer], incoming_answers: list) -> None:
+    async def _update_answers(self, answers: List[TemplateFieldAnswer], incoming_answers: list) -> None:
         answers_from_ticket = {el.id: el for el in answers}
         for el in incoming_answers:
             answer_from_ticket = answers_from_ticket.get(el["id"])
@@ -163,3 +176,13 @@ class TicketView(BaseHandler):
             answer["template_field"] = template_field_object
             answer["ticket"] = ticket
             await self.create(self.session, answer, object_name="Answer", alchemy_model=TemplateFieldAnswer)
+
+    async def _add_specialist_to_ticket(self, specialist: User, ticket_id: int):
+        ticket_query = select(self.model). \
+            options(selectinload(self.model.answers)). \
+            options(selectinload(self.model.ticket_files))
+        ticket = await self.get_obj(ticket_query, self.session, {"id": ticket_id})
+        ticket.specialist = specialist
+        await self.session.commit()
+        await self.session.refresh(ticket)
+        return ticket
