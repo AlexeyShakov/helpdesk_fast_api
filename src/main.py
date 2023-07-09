@@ -20,6 +20,7 @@ from crud_handler import BaseHandler
 from database import get_async_session
 from staff.endpoints import group_router, user_router
 from tickets.endpoints import ticket_router
+from tickets.ends.messages import message_router
 from tickets.models import TicketFile
 from tickets.schemas import TicketFileSchemaReturn
 from tickets.ticket_files import ticket_file_router
@@ -46,15 +47,4 @@ app.include_router(user_router)
 
 app.include_router(ticket_router)
 app.include_router(ticket_file_router)
-
-# TICKET_FILE_ROUTE = "/api/ticket_files"
-# @app.post(f"{TICKET_FILE_ROUTE}/", response_model=TicketFileSchemaReturn, status_code=201, tags=["TicketFile"])
-# async def upload_file(incoming_file: UploadFile, session: AsyncSession = Depends(get_async_session)):
-#     file_name = uuid.uuid4().hex[:6] + "_" + incoming_file.filename
-#     file_path = os.path.join(os.getcwd(), "..\\", "file_storage", file_name)
-#     async with aiofiles.open(file_path, 'wb') as file:
-#         content = await incoming_file.read()
-#         await file.write(content)
-#     handler = BaseHandler(TicketFile)
-#     return await handler.create(session, {"path": file_path, "name": incoming_file.filename},
-#                                 object_name="TicketFile", alchemy_model=TicketFile)
+app.include_router(message_router)

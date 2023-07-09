@@ -33,9 +33,11 @@ class Ticket(Base):
     topic = relationship("Topic", back_populates="tickets", lazy="joined")
     answers = relationship("TemplateFieldAnswer", cascade="all,delete", back_populates="ticket")
     ticket_files = relationship("TicketFile", cascade="all,delete", back_populates="ticket")
+    messages = relationship("Message", cascade="all,delete", back_populates="ticket")
 
 class TicketFile(Base):
     __tablename__ = "ticket_files"
+
     id = Column(Integer, primary_key=True)
     path = Column(Text, nullable=False)
     name = Column("title", String(200), nullable=False)
@@ -43,3 +45,16 @@ class TicketFile(Base):
     ticket_id = Column(Integer, ForeignKey("tickets.id"), nullable=True, default=None)
     ticket = relationship("Ticket", back_populates="ticket_files", lazy="joined")
 
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True)
+    text = Column(Text, nullable=False)
+    time = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    ticket_id = Column(Integer, ForeignKey("tickets.id"), nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    author = relationship("User", back_populates="messages", lazy="joined")
+    ticket = relationship("Ticket", back_populates="messages", lazy="joined")

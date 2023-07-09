@@ -32,3 +32,4 @@ class User(Base):
 
     group = relationship("Group", back_populates="users", lazy="joined")
     category = relationship("Category", back_populates="users", lazy="joined")
+    messages = relationship("Message", cascade="all,delete", back_populates="author")

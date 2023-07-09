@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from admins.schemas import TopicSchemaForTicket, CategorySchemaForTicket, \
     TemplateFieldSchemaReturn
 from staff.schemas import UserSchemaReturn
-from tickets.enums import TicketStatusChoice
+from tickets.enums import TicketStatusChoice, GradeChoice
 
 
 class ValueSchema(BaseModel):
@@ -33,6 +33,16 @@ class TicketFileSchemaReturn(BaseModel):
     id: int
     path: str
     name: str
+
+    class Config:
+        orm_mode = True
+
+
+class MessageSchemaReturn(BaseModel):
+    id: int
+    text: str
+    time: datetime
+    author: UserSchemaReturn
 
     class Config:
         orm_mode = True
@@ -73,6 +83,8 @@ class TicketSchemaReturn(TicketBaseSchema, TicketSchemaOnlyID):
     created: datetime
     in_work_date: Optional[datetime]
     status: TicketStatusChoice
+    messages: Optional[List[MessageSchemaReturn]]
+    grade: Optional[GradeChoice]
 
     class Config:
         orm_mode = True
@@ -80,3 +92,11 @@ class TicketSchemaReturn(TicketBaseSchema, TicketSchemaOnlyID):
 
 class AssignSpecialistSchema(BaseModel):
     id: int
+
+
+class MessageSchemaCreate(BaseModel):
+    text: str
+
+
+class GradeSchema(BaseModel):
+    grade: GradeChoice

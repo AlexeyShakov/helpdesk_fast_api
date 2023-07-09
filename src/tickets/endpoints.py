@@ -11,12 +11,13 @@ from admins.models import Category, Topic, TemplateField, TemplateFieldAnswer
 
 from crud_handler import BaseHandler
 from database import get_async_session
-from fastapi import Depends, Request, HTTPException, UploadFile
+from fastapi import Depends, Request, HTTPException
 
 from staff.models import User
 from tickets.enums import TicketStatusChoice
 from tickets.models import Ticket, TicketFile
-from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn, AssignSpecialistSchema
+from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn, AssignSpecialistSchema, \
+    GradeSchema
 from tickets.ticket_files import _delete_file
 from datetime import datetime
 
@@ -114,12 +115,21 @@ class TicketView(BaseHandler):
         return ticket
 
     @ticket_router.post(f"{ROUTE}/close_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
-    async def reject_ticket(self, ticket_id: int):
+    async def close_ticket(self, ticket_id: int):
         ticket: Ticket = await self._get_ticket(ticket_id)
         ticket.status = TicketStatusChoice.CLOSED
         await self.session.commit()
         await self.session.refresh(ticket)
         return ticket
+
+    @ticket_router.post(f"{ROUTE}/set_grade/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
+    async def set_grade(self, grade: GradeSchema, ticket_id: int):
+        ticket: Ticket = await self._get_ticket(ticket_id)
+        ticket.grade = grade.grade
+        await self.session.commit()
+        await self.session.refresh(ticket)
+        return ticket
+
 
     async def _update_files(self,
                             files: List[TicketFile],
@@ -191,5 +201,6 @@ class TicketView(BaseHandler):
         # So we need to query one more time with join
         ticket_query = select(self.model). \
             options(selectinload(self.model.answers)). \
-            options(selectinload(self.model.ticket_files))
+            options(selectinload(self.model.ticket_files)). \
+            options(selectinload(self.model.messages))
         return await self.get_obj(ticket_query, self.session, {"id": ticket_id})
