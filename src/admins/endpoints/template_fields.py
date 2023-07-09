@@ -23,7 +23,7 @@ class TemplateView(BaseHandler):
     @template_fields_router.post(f"{ROUTE}/", response_model=TemplateFieldSchemaReturn, status_code=201)
     async def create_item(self, template_field_object: TemplateFieldSchemaCreate):
         template_field_dict = template_field_object.dict()
-        obj = await self.get_obj(select(Template), self.session, template_field_dict.get("template").get("id"))
+        obj = await self.get_obj(select(Template), self.session, {"id": template_field_dict.get("template").get("id")})
         template_field_dict["template"] = obj
         return await self.create(self.session, template_field_dict)
 

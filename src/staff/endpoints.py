@@ -66,8 +66,8 @@ class UserView(BaseHandler):
     @user_router.post(f"{ROUTE_USER}/", response_model=UserSchemaReturn, status_code=201)
     async def create_item(self, user_object: UserSchemaCreate):
         user_dict = user_object.dict()
-        group_obj = await self.get_obj(select(Group), self.session, user_dict.get("group").get("id"))
-        category_object = await self.get_obj(select(Category), self.session, user_dict.get("category").get("id"))
+        group_obj = await self.get_obj(select(Group), self.session, {"id": user_dict.get("group").get("id")})
+        category_object = await self.get_obj(select(Category), self.session, {"id": user_dict.get("category").get("id")})
         user_dict["group"] = group_obj
         user_dict["category"] = category_object
         return await self.create(self.session, user_dict, object_name="User")

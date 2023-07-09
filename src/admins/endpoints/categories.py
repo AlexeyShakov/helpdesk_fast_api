@@ -25,8 +25,8 @@ class CategoryView(BaseHandler):
     @category_router.post(f"{ROUTE}", response_model=CategorySchemaReturn, status_code=201)
     async def create_category(self, category_object: CategorySchemaCreate):
         category_dict = category_object.dict()
-        topic_obj = await self.get_obj(select(Topic), self.session, category_dict.get("topic").get("id"))
-        template_obj = await self.get_obj(select(Template), self.session, category_dict.get("template").get("id"))
+        topic_obj = await self.get_obj(select(Topic), self.session, {"id": category_dict.get("topic").get("id")})
+        template_obj = await self.get_obj(select(Template), self.session, {"id": category_dict.get("template").get("id")})
         category_dict["topic"] = topic_obj
         category_dict["template"] = template_obj
         return await self.create(self.session, category_dict, object_name="Category")
