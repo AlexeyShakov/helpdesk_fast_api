@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.orm import selectinload
-from fastapi import Depends
+from fastapi import Depends, Request
 from sqlalchemy import select
 
 from admins.filters import TopicFilter
@@ -26,10 +26,10 @@ class TopicView(BaseHandler):
 
     @topic_router.post(f"{ROUTE}/", response_model=TopicSchemaReturn, status_code=201)
     async def create_item(self, topic_object: TopicSchemaCreate):
-        return await self.create(self.session, topic_object.dict())
+        return await self.create(self.session, topic_object.dict(), object_name="Topic")
 
     @topic_router.get(f"{ROUTE}/", response_model=List[TopicListSchemaReturn], status_code=200)
-    async def get_topics(self,
+    async def read_topics(self,
                          ordering_params: TopicOrderingSchema = Depends(TopicOrderingSchema),
                          filter_params: TopicFilterSchema = Depends(TopicFilterSchema),
                          offset: int = 0,
@@ -43,8 +43,10 @@ class TopicView(BaseHandler):
                                offset=offset)
 
     @topic_router.get(f"{ROUTE}/" + "{topic_id}", response_model=TopicSchemaReturn, status_code=200)
-    async def get_topic(self, topic_id: int):
-        return await self.retrieve(self.session, topic_id)
+    async def read_topic(self, topic_id: int, request: Request):
+        print("request", request.user)
+        query = select(self.model)
+        return await self.retrieve(query, self.session, topic_id)
 
     @topic_router.delete(f"{ROUTE}/" + "{topic_id}", status_code=204)
     async def delete_topic(self, topic_id: int):
@@ -52,4 +54,6 @@ class TopicView(BaseHandler):
 
     @topic_router.put(f"{ROUTE}/" + "{topic_id}", response_model=TopicSchemaReturn, status_code=200)
     async def update_topic(self, topic_id: int, topic: TopicSchemaReturn):
-        return await self.update(self.session, topic_id, topic.dict())
+        topic_obj = await self.update(self.session, topic_id, topic.dict())
+        await self.session.commit()
+        return topic_obj

@@ -25,11 +25,11 @@ class CategoryView(BaseHandler):
     @category_router.post(f"{ROUTE}", response_model=CategorySchemaReturn, status_code=201)
     async def create_category(self, category_object: CategorySchemaCreate):
         category_dict = category_object.dict()
-        topic_obj = await self.get_obj(Topic, self.session, category_dict.get("topic").get("id"))
-        template_obj = await self.get_obj(Template, self.session, category_dict.get("template").get("id"))
+        topic_obj = await self.get_obj(select(Topic), self.session, {"id": category_dict.get("topic").get("id")})
+        template_obj = await self.get_obj(select(Template), self.session, {"id": category_dict.get("template").get("id")})
         category_dict["topic"] = topic_obj
         category_dict["template"] = template_obj
-        return await self.create(self.session, category_dict)
+        return await self.create(self.session, category_dict, object_name="Category")
 
     @category_router.get(f"{ROUTE}", response_model=List[CategorySchemaReturn], status_code=200)
     async def read_categories(
@@ -58,7 +58,8 @@ class CategoryView(BaseHandler):
 
     @category_router.get(f"{ROUTE}/" + "{category_id}", response_model=CategorySchemaReturn, status_code=200)
     async def read_category(self, category_id: int):
-        return await self.retrieve(self.session, category_id)
+        query = select(self.model)
+        return await self.retrieve(query, self.session, category_id)
 
     @category_router.delete(f"{ROUTE}/" + "{category_id}", status_code=204)
     async def delete_category(self, category_id: int):
@@ -70,9 +71,12 @@ class CategoryView(BaseHandler):
         topic_data = category_dict.pop("topic")
         template_data = category_dict.pop("template")
         fk_obj = {"topic_id": topic_data["id"], "template_id": template_data["id"]}
-        return await self.update(
+        category_obj = await self.update(
             session=self.session,
             id=category_id,
             data=category_dict,
             fk_obj=fk_obj,
-            update_fk=True)
+            update_fk=True
+        )
+        await self.session.commit()
+        return category_obj

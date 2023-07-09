@@ -7,9 +7,10 @@ from sqlalchemy.orm import relationship
 class Topic(Base):
     __tablename__ = "topics"
     id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
+    name = Column("name", String(100), nullable=False, unique=True)
     # Для связи один ко многим
     categories = relationship("Category", back_populates="topic")
+    tickets = relationship("Ticket", back_populates="topic")
 
     @property
     def category_count(self) -> int:
@@ -19,7 +20,7 @@ class Topic(Base):
 class Template(Base):
     __tablename__ = "templates"
     id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
+    name = Column("name", String(100), nullable=False, unique=True)
 
     categories = relationship("Category", back_populates="template")
     template_fields = relationship("TemplateField", cascade="all,delete", back_populates="template")
@@ -28,7 +29,7 @@ class Template(Base):
 class Category(Base):
     __tablename__ = "categories"
     id = Column(Integer, primary_key=True)
-    name = Column("name", String(100), nullable=False)
+    name = Column("name", String(100), nullable=False, unique=True)
     time_of_life = Column(JSON, nullable=False)
     notification_repeat = Column(JSON, nullable=False)
     topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
@@ -37,6 +38,8 @@ class Category(Base):
     template = relationship("Template", back_populates="categories", lazy="joined")
     topic = relationship("Topic", back_populates="categories", lazy="joined")
     ready_answers = relationship("ReadyAnswer", back_populates="category")
+    users = relationship("User", back_populates="category")
+    tickets = relationship("Ticket", back_populates="category")
 
 
 class TemplateField(Base):
@@ -59,8 +62,10 @@ class TemplateFieldAnswer(Base):
     label = Column(String(200), nullable=False)
     value = Column(JSON)
     template_field_id = Column(Integer, ForeignKey("template_fields.id"))
+    ticket_id = Column(Integer, ForeignKey("tickets.id"))
 
     template_field = relationship("TemplateField", back_populates="template_field_answers", lazy="joined")
+    ticket = relationship("Ticket", back_populates="answers", lazy="joined")
 
 
 class ReadyAnswer(Base):

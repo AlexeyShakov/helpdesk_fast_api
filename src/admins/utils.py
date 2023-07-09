@@ -3,20 +3,10 @@ from fastapi import HTTPException
 from admins.enums import TemplateFieldChoices
 from admins.models import TemplateField
 from admins.schemas import SelectDataSchema, NameSchema
-from database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic.error_wrappers import ValidationError
 from pydantic import BaseModel
-
-
-async def get_obj(model: Base, session: AsyncSession, id: int) -> Base:
-    query = select(model).where(model.id == id)
-    result = await session.execute(query)
-    obj = result.scalars().first()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Not found")
-    return obj
 
 
 async def validate_template_field_answer_value(template_field: TemplateField, value: dict, label: str) -> None:

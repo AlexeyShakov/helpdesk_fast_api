@@ -6,20 +6,28 @@ from admins.enums import TypeChoices, TopicOrderingChoices, CategoryOrderingChoi
 from admins.models import TemplateFieldChoices
 
 
+class TopicSchemaOnlyID(BaseModel):
+    id: int
+
+
 class TopicSchemaCreate(BaseModel):
     name: str
 
 
-class TopicSchemaReturn(TopicSchemaCreate):
-    id: int
-
+class TopicSchemaReturn(TopicSchemaCreate, TopicSchemaOnlyID):
     class Config:
         orm_mode = True
 
 
 class TopicListSchemaReturn(TopicSchemaReturn):
-    id: int
     category_count: int
+
+    class Config:
+        orm_mode = True
+
+
+class TopicSchemaForTicket(TopicSchemaOnlyID):
+    name: str
 
     class Config:
         orm_mode = True
@@ -59,6 +67,11 @@ class CategorySchemaCreate(BaseModel):
 
 class CategorySchemaReturn(CategoryOnlyIDSchema, CategorySchemaCreate):
     pass
+
+
+class CategorySchemaForTicket(CategoryOnlyIDSchema):
+    name: str
+    template: Optional[TemplateSchemaReturn]
 
 
 class NameSchema(BaseModel):

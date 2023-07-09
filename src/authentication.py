@@ -11,7 +11,10 @@ class User(SimpleUser):
 class BasicAuthBackend(AuthenticationBackend):
     async def authenticate(self, conn):
         if "Authorization" not in conn.headers:
-            return
+            url = conn.url.path
+            if url.split("/")[-1] in ("docs", "openapi.json"):
+                return
+            raise AuthenticationError("No token received")
         auth = conn.headers["Authorization"]
         try:
             scheme, token = auth.split()
@@ -25,7 +28,6 @@ class BasicAuthBackend(AuthenticationBackend):
                                     json={"access": token}) as resp:
                 if resp.status == 200:
                     user_data = await resp.json()
-                    print("user_data", user_data)
                 else:
                     raise AuthenticationError("Invalid token")
         user = User(**user_data)

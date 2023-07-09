@@ -1,6 +1,7 @@
 from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from admins.models import TemplateField, Template
@@ -22,7 +23,7 @@ class TemplateView(BaseHandler):
     @template_fields_router.post(f"{ROUTE}/", response_model=TemplateFieldSchemaReturn, status_code=201)
     async def create_item(self, template_field_object: TemplateFieldSchemaCreate):
         template_field_dict = template_field_object.dict()
-        obj = await self.get_obj(Template, self.session, template_field_dict.get("template").get("id"))
+        obj = await self.get_obj(select(Template), self.session, {"id": template_field_dict.get("template").get("id")})
         template_field_dict["template"] = obj
         return await self.create(self.session, template_field_dict)
 
@@ -37,10 +38,12 @@ class TemplateView(BaseHandler):
         template_field_dict = template_field.dict()
         template_data = template_field_dict.pop("template")
         fk_obj = {"template_id": template_data["id"]}
-        return await self.update(
+        template_field_obj = await self.update(
             session=self.session,
             id=template_field_id,
             data=template_field_dict,
             fk_obj=fk_obj,
             update_fk=True
         )
+        await self.session.commit()
+        return template_field_obj

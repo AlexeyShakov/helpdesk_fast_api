@@ -22,10 +22,19 @@ class BaseHandler:
         self.model = model
         self.filter_class = filter_class
 
-    async def create(self, session: AsyncSession, data: dict) -> Base:
-        obj = self.model(**data)
+    async def create(
+            self,
+            session: AsyncSession,
+            data: dict,
+            alchemy_model: Base = None,
+            object_name: Optional[str] = None) -> Base:
+        model = self.model if alchemy_model is None else alchemy_model
+        obj = model(**data)
         session.add(obj)
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            raise HTTPException(status_code=500, detail=f"{object_name} with such parameters already exists")
         await session.refresh(obj)
         return obj
 
@@ -60,11 +69,11 @@ class BaseHandler:
             needed_objects = result.scalars().all()
         return needed_objects
 
-    async def retrieve(self, session: AsyncSession, obj_id: int) -> Base:
-        return await self.get_obj(self.model, session, obj_id)
+    async def retrieve(self, query: Select, session: AsyncSession, obj_id: int) -> Base:
+        return await self.get_obj(query, session, {"id": obj_id})
 
     async def delete(self, session: AsyncSession, obj_id: int) -> Base:
-        obj = await self.get_obj(self.model, session, obj_id)
+        obj = await self.get_obj(select(self.model), session, {"id": obj_id})
         try:
             await session.delete(obj)
             await session.commit()
@@ -72,8 +81,8 @@ class BaseHandler:
             raise HTTPException(status_code=500,
                                 detail="This object has existing child objects. Deletion is not possible")
 
-    async def get_obj(self, model: Base, session: AsyncSession, obj_id: int) -> Base:
-        query = select(model).filter_by(id=obj_id)
+    async def get_obj(self, query: Select, session: AsyncSession, obj_attrs: dict) -> Base:
+        query = query.filter_by(**obj_attrs)
         result = await session.execute(query)
         obj = result.scalars().first()
         if not obj:
@@ -86,21 +95,21 @@ class BaseHandler:
             id: int,
             data: dict,
             fk_obj: dict = None,
-            update_fk: bool = False
+            update_fk: bool = False,
+            alchemy_model: Base = None,
     ):
+        model = self.model if alchemy_model is None else alchemy_model
         data.pop("id")
-        obj = await self.get_obj(self.model, session, id)
+        obj = await self.get_obj(select(self.model), session, {"id": id})
         if update_fk:
             for k, v in fk_obj.items():
                 setattr(obj, k, v)
-        stmt = update(self.model).filter_by(id=id).values(**data).execution_options(synchronize_session="fetch")
+        stmt = update(model).filter_by(id=id).values(**data).execution_options(synchronize_session="fetch")
         try:
             await session.execute(stmt)
         except IntegrityError:
             raise HTTPException(status_code=500,
                                 detail=f"There is no object with id={v} for {k}")
-        await session.commit()
-        await session.refresh(obj)
         return obj
 
     async def order_query(self, query, ordering_field: str, joined_ordering: Optional[dict]):
