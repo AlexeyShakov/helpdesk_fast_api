@@ -1,5 +1,5 @@
 from typing import Optional, List, Union
-
+from datetime import datetime
 from fastapi import HTTPException
 from pydantic import validator
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from admins.schemas import TopicSchemaForTicket, CategorySchemaForTicket, \
     TemplateFieldSchemaReturn
 from staff.schemas import UserSchemaReturn
+from tickets.enums import TicketStatusChoice
 
 
 class ValueSchema(BaseModel):
@@ -69,6 +70,9 @@ class TicketSchemaReturn(TicketBaseSchema, TicketSchemaOnlyID):
     creator: UserSchemaReturn
     specialist: Optional[UserSchemaReturn] = None
     ticket_files: Optional[List[TicketFileSchemaReturn]]
+    created: datetime
+    in_work_date: Optional[datetime]
+    status: TicketStatusChoice
 
     class Config:
         orm_mode = True

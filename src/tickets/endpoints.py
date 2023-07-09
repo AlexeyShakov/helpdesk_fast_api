@@ -1,7 +1,5 @@
-import uuid
 from typing import List
 
-import aiofiles
 from fastapi_utils.inferring_router import InferringRouter
 from fastapi_utils.cbv import cbv
 from sqlalchemy import select
@@ -16,9 +14,11 @@ from database import get_async_session
 from fastapi import Depends, Request, HTTPException, UploadFile
 
 from staff.models import User
+from tickets.enums import TicketStatusChoice
 from tickets.models import Ticket, TicketFile
 from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn, AssignSpecialistSchema
 from tickets.ticket_files import _delete_file
+from datetime import datetime
 
 ticket_router = InferringRouter(tags=["Ticket"])
 ROUTE = "/api/tickets"
@@ -51,12 +51,7 @@ class TicketView(BaseHandler):
                 await self._add_files_to_ticket(file, ticket)
         if answers_data:
             await self._add_answers_to_ticket(answers_data, ticket)
-        # We cannot create an object and get access to related object at once(in this case it's reverse FK).
-        # So we need to query one more time with join
-        ticket_with_answers = select(self.model). \
-            options(selectinload(self.model.answers)). \
-            options(selectinload(self.model.ticket_files))
-        return await self.get_obj(ticket_with_answers, self.session, {"id": ticket.id})
+        return await self._get_ticket(ticket.id)
 
     @ticket_router.get(f"{ROUTE}/", response_model=List[TicketSchemaReturn], status_code=200)
     async def read_tickets(self, offset: int = 0, limit: int = 2):
@@ -65,10 +60,7 @@ class TicketView(BaseHandler):
 
     @ticket_router.get(f"{ROUTE}/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def read_ticket(self, ticket_id: int):
-        query = select(self.model). \
-            options(selectinload(self.model.answers)). \
-            options(selectinload(self.model.ticket_files))
-        return await self.retrieve(query, self.session, ticket_id)
+        return await self._get_ticket(ticket_id)
 
     @ticket_router.delete(f"{ROUTE}/" + "{ticket_id}", status_code=204)
     async def delete_ticket(self, ticket_id: int):
@@ -82,10 +74,7 @@ class TicketView(BaseHandler):
         files = ticket_dict.pop("ticket_files")
 
         # Обновление готовых ответов и файлов
-        ticket_query = select(self.model). \
-            options(selectinload(self.model.answers)). \
-            options(selectinload(self.model.ticket_files))
-        ticket_obj = await self.get_obj(ticket_query, self.session, {"id": ticket_dict.get("id")})
+        ticket_obj = await self._get_ticket(ticket_id)
         answers_from_ticket = ticket_obj.answers
         files_from_ticket = ticket_obj.ticket_files
         await self._update_answers(answers_from_ticket, answers)
@@ -94,18 +83,14 @@ class TicketView(BaseHandler):
         topic_data = ticket_dict.pop("topic")
         category_data = ticket_dict.pop("category")
         fk_obj = {"topic_id": topic_data["id"], "category_id": category_data["id"]}
-        ticket = await self.update(
+        await self.update(
             session=self.session,
             id=ticket_id,
             data=ticket_dict,
             fk_obj=fk_obj,
             update_fk=True
         )
-        ticket_with_related_models_query = select(self.model). \
-            options(selectinload(self.model.answers)). \
-            options(selectinload(self.model.ticket_files))
-
-        returning_ticket = await self.get_obj(ticket_with_related_models_query, self.session, {"id": ticket.id})
+        returning_ticket = await self._get_ticket(ticket_id)
         await self.session.commit()
         await self.session.refresh(returning_ticket)
         return returning_ticket
@@ -119,6 +104,22 @@ class TicketView(BaseHandler):
     async def assign_specialist(self, ticket_id: int, specialist_id: AssignSpecialistSchema):
         specialist = await self.get_obj(select(User), self.session, {"id": specialist_id.id})
         return await self._add_specialist_to_ticket(specialist, ticket_id)
+
+    @ticket_router.post(f"{ROUTE}/reject_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
+    async def reject_ticket(self, ticket_id: int):
+        ticket: Ticket = await self._get_ticket(ticket_id)
+        ticket.status = TicketStatusChoice.REJECTED
+        await self.session.commit()
+        await self.session.refresh(ticket)
+        return ticket
+
+    @ticket_router.post(f"{ROUTE}/close_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
+    async def reject_ticket(self, ticket_id: int):
+        ticket: Ticket = await self._get_ticket(ticket_id)
+        ticket.status = TicketStatusChoice.CLOSED
+        await self.session.commit()
+        await self.session.refresh(ticket)
+        return ticket
 
     async def _update_files(self,
                             files: List[TicketFile],
@@ -178,11 +179,17 @@ class TicketView(BaseHandler):
             await self.create(self.session, answer, object_name="Answer", alchemy_model=TemplateFieldAnswer)
 
     async def _add_specialist_to_ticket(self, specialist: User, ticket_id: int):
-        ticket_query = select(self.model). \
-            options(selectinload(self.model.answers)). \
-            options(selectinload(self.model.ticket_files))
-        ticket = await self.get_obj(ticket_query, self.session, {"id": ticket_id})
+        ticket: Ticket = await self._get_ticket(ticket_id)
         ticket.specialist = specialist
+        ticket.in_work_date = datetime.now()
         await self.session.commit()
         await self.session.refresh(ticket)
         return ticket
+
+    async def _get_ticket(self, ticket_id: int):
+        # We cannot create an object and get access to related object at once(in this case it's reverse FK).
+        # So we need to query one more time with join
+        ticket_query = select(self.model). \
+            options(selectinload(self.model.answers)). \
+            options(selectinload(self.model.ticket_files))
+        return await self.get_obj(ticket_query, self.session, {"id": ticket_id})
