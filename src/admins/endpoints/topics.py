@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 
 from admins.filters import TopicFilter
+from permissions import manage_helpdesk
 from admins.schemas import TopicSchemaReturn, TopicSchemaCreate, TopicOrderingSchema, TopicFilterSchema, \
     TopicListSchemaReturn
 from crud_handler import BaseHandler
@@ -25,15 +26,18 @@ class TopicView(BaseHandler):
         super().__init__(Topic, TopicFilter)
 
     @topic_router.post(f"{ROUTE}/", response_model=TopicSchemaReturn, status_code=201)
-    async def create_item(self, topic_object: TopicSchemaCreate):
+    async def create_item(self, topic_object: TopicSchemaCreate, requst: Request):
+        await manage_helpdesk(requst)
         return await self.create(self.session, topic_object.dict(), object_name="Topic")
 
     @topic_router.get(f"{ROUTE}/", response_model=List[TopicListSchemaReturn], status_code=200)
     async def read_topics(self,
-                         ordering_params: TopicOrderingSchema = Depends(TopicOrderingSchema),
-                         filter_params: TopicFilterSchema = Depends(TopicFilterSchema),
-                         offset: int = 0,
-                         limit: int = 5):
+                          request: Request,
+                          ordering_params: TopicOrderingSchema = Depends(TopicOrderingSchema),
+                          filter_params: TopicFilterSchema = Depends(TopicFilterSchema),
+                          offset: int = 0,
+                          limit: int = 5):
+        await manage_helpdesk(request)
         query = select(self.model).options(selectinload(Topic.categories))
         return await self.list(query=query,
                                session=self.session,
@@ -44,16 +48,18 @@ class TopicView(BaseHandler):
 
     @topic_router.get(f"{ROUTE}/" + "{topic_id}", response_model=TopicSchemaReturn, status_code=200)
     async def read_topic(self, topic_id: int, request: Request):
-        print("request", request.user)
+        await manage_helpdesk(request)
         query = select(self.model)
         return await self.retrieve(query, self.session, topic_id)
 
     @topic_router.delete(f"{ROUTE}/" + "{topic_id}", status_code=204)
-    async def delete_topic(self, topic_id: int):
+    async def delete_topic(self, topic_id: int, request: Request,):
+        await manage_helpdesk(request)
         return await self.delete(self.session, topic_id)
 
     @topic_router.put(f"{ROUTE}/" + "{topic_id}", response_model=TopicSchemaReturn, status_code=200)
-    async def update_topic(self, topic_id: int, topic: TopicSchemaReturn):
+    async def update_topic(self, topic_id: int, topic: TopicSchemaReturn, request: Request):
+        await manage_helpdesk(request)
         topic_obj = await self.update(self.session, topic_id, topic.dict())
         await self.session.commit()
         return topic_obj

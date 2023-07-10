@@ -4,9 +4,10 @@ from starlette.authentication import (
 )
 
 
-class User(SimpleUser):
+class UserAuth(SimpleUser):
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(kwargs)
+
 
 class BasicAuthBackend(AuthenticationBackend):
     async def authenticate(self, conn):
@@ -30,5 +31,5 @@ class BasicAuthBackend(AuthenticationBackend):
                     user_data = await resp.json()
                 else:
                     raise AuthenticationError("Invalid token")
-        user = User(**user_data)
+        user = UserAuth(**user_data)
         return AuthCredentials(["authenticated"]), user

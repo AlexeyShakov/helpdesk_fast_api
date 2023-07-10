@@ -38,6 +38,7 @@ class UserSchemaCreate(UserSchemaBase, UserSchemaPrivateInfo):
         reg = re.compile(r"^\+\d{5,20}$")
         if not re.match(reg, field_value):
             raise ValueError("The phone number is not valid")
+        return field_value
 
 class UserSchemaReturn(UserSchemaBase):
     id: int
