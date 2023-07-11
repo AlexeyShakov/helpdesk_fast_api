@@ -14,7 +14,7 @@ from database import get_async_session
 from fastapi import Depends, Request, HTTPException
 
 from staff.models import User
-from tickets.ends.permissions import allow_create_ticket, allow_read_ticket, allow_delete_and_update_ticket, \
+from tickets.ends.permissions import allow_create_ticket, allow_read_ticket, \
     allow_take_and_reject_ticket, only_creator, allow_assign_specialist
 from tickets.enums import TicketStatusChoice
 from tickets.models import Ticket, TicketFile
