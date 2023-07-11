@@ -12,6 +12,7 @@
 29. Тесты
 30. Попробовать подключить другую базу. Если получится, то переписать Authentication middleware
 31. Добавление юзера в специалисты/руководители категории
-
+32. Проверить пермишены для написанных на работе тикетов
+33. Попробовать засунуть request в Depends(https://stackoverflow.com/questions/74010813/fastapi-how-can-i-modify-request-from-inside-dependency)
 
 
