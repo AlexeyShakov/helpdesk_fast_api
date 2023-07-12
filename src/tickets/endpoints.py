@@ -15,7 +15,7 @@ from fastapi import Depends, Request, HTTPException
 
 from staff.models import User
 from tickets.ends.permissions import allow_create_ticket, allow_read_ticket, \
-    allow_take_and_reject_ticket, only_creator, allow_assign_specialist
+    allow_take_and_reject_ticket, only_creator, allow_assign_specialist, allow_ticket_management
 from tickets.enums import TicketStatusChoice
 from tickets.models import Ticket, TicketFile
 from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn, AssignSpecialistSchema, \
@@ -36,7 +36,7 @@ class TicketView(BaseHandler):
 
     @ticket_router.post(f"{ROUTE}/", response_model=TicketSchemaReturn, status_code=201)
     async def create_item(self, ticket_object: TicketSchemaCreate, request: Request):
-        await allow_create_ticket(request, self.session)
+        await allow_ticket_management(request, self.session, "create")
 
         ticket_dict = ticket_object.dict()
         answers_data = ticket_dict.pop("answers")
@@ -65,17 +65,17 @@ class TicketView(BaseHandler):
 
     @ticket_router.get(f"{ROUTE}/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def read_ticket(self, ticket_id: int, request: Request):
-        await allow_read_ticket(request, self.session)
+        await allow_ticket_management(request, self.session, "read")
         return await self._get_ticket(ticket_id)
 
     @ticket_router.delete(f"{ROUTE}/" + "{ticket_id}", status_code=204)
     async def delete_ticket(self, ticket_id: int, request: Request):
-        await only_creator(request, self.session)
+        await allow_ticket_management(request, self.session, "only_creator")
         return await self.delete(self.session, ticket_id)
 
     @ticket_router.put(f"{ROUTE}/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def update_ticket(self, ticket_id: int, ticket: TicketSchemaReturn, request: Request):
-        await only_creator(request, self.session)
+        await allow_ticket_management(request, self.session, "only_creator")
 
         ticket_dict = ticket.dict()
         ticket_dict.pop("creator")
@@ -106,20 +106,20 @@ class TicketView(BaseHandler):
 
     @ticket_router.post(f"{ROUTE}/take_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def take_ticket(self, request: Request, ticket_id: int):
-        await allow_take_and_reject_ticket(request, self.session)
+        await allow_ticket_management(request, self.session, "take_or_reject_ticket")
         specialist = await self.get_obj(select(User), self.session, {"main_id": request.user.id})
         return await self._add_specialist_to_ticket(specialist, ticket_id)
 
     @ticket_router.post(f"{ROUTE}/assign_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def assign_specialist(self, ticket_id: int, specialist_id: AssignSpecialistSchema, request: Request):
-        await allow_assign_specialist(request, self.session)
+        await allow_ticket_management(request, self.session, "assign_specialist")
 
         specialist = await self.get_obj(select(User), self.session, {"id": specialist_id.id})
         return await self._add_specialist_to_ticket(specialist, ticket_id)
 
     @ticket_router.post(f"{ROUTE}/reject_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def reject_ticket(self, ticket_id: int, request: Request):
-        await allow_take_and_reject_ticket(request, self.session)
+        await allow_ticket_management(request, self.session, "take_or_reject_ticket")
 
         ticket: Ticket = await self._get_ticket(ticket_id)
         ticket.status = TicketStatusChoice.REJECTED
