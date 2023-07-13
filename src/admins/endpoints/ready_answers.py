@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from admins.filters import ReadyAnswerFilter
 from admins.models import ReadyAnswer, Category
-from permissions import manage_helpdesk, access_ready_answers_list
+from permissions import manage_helpdesk, access_ready_answers_list, allow_helpdesk_management
 from admins.schemas import ReadyAnswerSchemaCreate, ReadyAnswerSchemaReturn, SearchingSchema, ReadyAnswerFilterSchema
 from crud_handler import BaseHandler
 from database import get_async_session
 
-ready_answers_router = InferringRouter(tags=["ReadyAnswer"])
+ready_answers_router = InferringRouter(tags=["ReadyAnswer"], dependencies=[Depends(allow_helpdesk_management)])
 ROUTE = "/api/ready_answers"
 
 
@@ -26,8 +26,6 @@ class TemplateView(BaseHandler):
 
     @ready_answers_router.post(f"{ROUTE}/", response_model=ReadyAnswerSchemaReturn, status_code=201)
     async def create_ready_answer(self, ready_answer_object: ReadyAnswerSchemaCreate, request: Request):
-        await manage_helpdesk(request)
-
         ready_answer_dict = ready_answer_object.dict()
         obj = await self.get_obj(select(Category), self.session, {"id": ready_answer_dict.get("category").get("id")})
         ready_answer_dict["category"] = obj
@@ -40,7 +38,6 @@ class TemplateView(BaseHandler):
                                  filter_params: ReadyAnswerFilterSchema = Depends(ReadyAnswerFilterSchema),
                                  offset: int = 0,
                                  limit: int = 5):
-        await access_ready_answers_list(request)
         search_fields = {
             "ordinary": {"column": "answer_text"},
             "related": []
@@ -56,15 +53,12 @@ class TemplateView(BaseHandler):
 
     @ready_answers_router.delete(f"{ROUTE}/" + "{ready_answer_id}", status_code=204)
     async def delete_ready_answer(self, ready_answer_id: int, request: Request):
-        await manage_helpdesk(request)
         return await self.delete(self.session, ready_answer_id)
 
     @ready_answers_router.put(f"{ROUTE}/" + "{ready_answer_id}",
                               response_model=ReadyAnswerSchemaReturn,
                               status_code=200)
     async def update_ready_answer(self, request: Request, ready_answer_id: int, ready_answer: ReadyAnswerSchemaReturn):
-        await manage_helpdesk(request)
-
         ready_answer_dict = ready_answer.dict()
         category_data = ready_answer_dict.pop("category")
         fk_obj = {"category_id": category_data["id"]}

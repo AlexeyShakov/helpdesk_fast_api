@@ -19,8 +19,8 @@ from config import FILE_STORAGE
 from crud_handler import BaseHandler
 from database import get_async_session
 from staff.endpoints import group_router, user_router
-from tickets.endpoints import ticket_router
-from tickets.ends.messages import message_router
+from tickets.endpoints.tickets import ticket_router
+from tickets.endpoints.messages import message_router
 from tickets.models import TicketFile
 from tickets.schemas import TicketFileSchemaReturn
 from tickets.ticket_files import ticket_file_router

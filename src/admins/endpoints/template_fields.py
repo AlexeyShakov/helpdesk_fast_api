@@ -23,7 +23,6 @@ class TemplateFieldView(BaseHandler):
 
     @template_fields_router.post(f"{ROUTE}/", response_model=TemplateFieldSchemaReturn, status_code=201)
     async def create_item(self, template_field_object: TemplateFieldSchemaCreate, request: Request):
-        await manage_helpdesk(request)
         template_field_dict = template_field_object.dict()
         obj = await self.get_obj(select(Template), self.session, {"id": template_field_dict.get("template").get("id")})
         template_field_dict["template"] = obj
@@ -31,7 +30,6 @@ class TemplateFieldView(BaseHandler):
 
     @template_fields_router.delete(f"{ROUTE}/" + "{template_field_id}", status_code=204)
     async def delete_template_field(self, template_field_id: int, request: Request):
-        await manage_helpdesk(request)
         return await self.delete(self.session, template_field_id)
 
     @template_fields_router.put(f"{ROUTE}/" + "{template_field_id}",
@@ -39,7 +37,6 @@ class TemplateFieldView(BaseHandler):
                                 status_code=200)
     async def update_template_field(self, request: Request, template_field_id: int,
                                     template_field: TemplateFieldSchemaReturn):
-        await manage_helpdesk(request)
         template_field_dict = template_field.dict()
         template_data = template_field_dict.pop("template")
         fk_obj = {"template_id": template_data["id"]}

@@ -1,16 +1,19 @@
 from json import JSONDecodeError
 
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud_handler import BaseHandler
+from database import get_async_session
 from staff.enums import UserRoleChoices
 from staff.models import User
 from tickets.models import Ticket
 
 
-async def allow_ticket_management(request: Request, session: AsyncSession, action: str, error_msg: str = None):
+async def allow_ticket_management(request: Request, session: AsyncSession = Depends(get_async_session),
+                                  error_msg: str = None):
+    route = request["route"].name
     pk = request.path_params.get("ticket_id")
     try:
         data = await request.json()
@@ -20,14 +23,17 @@ async def allow_ticket_management(request: Request, session: AsyncSession, actio
     ticket = await handler.get_obj(select(Ticket), session, {"id": int(pk)}) if pk else None
     user_from_db = await handler.get_obj(select(User), session, {"main_id": request.user.id})
     permission_mapping = {
-        "create": allow_create_ticket,
-        "read": allow_read_ticket,
-        "only_creator": only_creator,
-        "take_or_reject_ticket": allow_take_and_reject_ticket,
+        "create_item": allow_create_ticket,
+        "read_ticket": allow_read_ticket,
+        "delete_ticket": only_creator,
+        "update_ticket": only_creator,
+        "take_ticket": allow_take_and_reject_ticket,
         "assign_specialist": allow_assign_specialist
 
     }
-    if permission_checker := permission_mapping.get(action):
+    if route == "read_tickets":
+        return
+    if permission_checker := permission_mapping.get(route):
         return await permission_checker(data, user_from_db, ticket)
     raise HTTPException(status_code=500,
                         detail=error_msg or "Unknown action")

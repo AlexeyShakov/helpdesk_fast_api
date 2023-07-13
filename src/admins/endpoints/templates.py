@@ -28,7 +28,6 @@ class TemplateView(BaseHandler):
 
     @template_router.post(f"{ROUTE}/", response_model=TemplateSchemaReturn, status_code=201)
     async def create_item(self, template_object: TemplateSchemaCreate, request: Request):
-        await manage_helpdesk(request)
         return await self.create(self.session, template_object.dict(), object_name="Template")
 
     @template_router.get(f"{ROUTE}/", response_model=List[TemplateSchemaReturn], status_code=201)
@@ -41,7 +40,6 @@ class TemplateView(BaseHandler):
             offset: int = 0,
             limit: int = 2
     ):
-        await manage_helpdesk(request)
         search_fields = {
             "ordinary": {"column": "name"},
             "related": []
@@ -58,18 +56,15 @@ class TemplateView(BaseHandler):
 
     @template_router.get(f"{ROUTE}/" + "{template_id}", response_model=TemplateSchemaReturn, status_code=200)
     async def read_template(self, template_id: int, request: Request):
-        await manage_helpdesk(request)
         query = select(self.model)
         return await self.retrieve(query, self.session, template_id)
 
     @template_router.delete(f"{ROUTE}/" + "{template_id}", status_code=204)
     async def delete_template(self, template_id: int, request: Request):
-        await manage_helpdesk(request)
         return await self.delete(self.session, template_id)
 
     @template_router.put(f"{ROUTE}/" + "{template_id}", response_model=TemplateSchemaReturn, status_code=200)
     async def update_template(self, template_id: int, template: TemplateSchemaReturn, request: Request):
-        await manage_helpdesk(request)
         template_obj = await self.update(self.session, template_id, template.dict())
         await self.session.commit()
         return template_obj
@@ -78,5 +73,4 @@ class TemplateView(BaseHandler):
                          status_code=200)
     async def fields_by_template(self, request: Request, template_id: int,
                                  session: AsyncSession = Depends(get_async_session)):
-        await manage_helpdesk(request)
         return await get_fields_by_template(session, template_id)

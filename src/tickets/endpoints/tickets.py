@@ -14,16 +14,15 @@ from database import get_async_session
 from fastapi import Depends, Request, HTTPException
 
 from staff.models import User
-from tickets.ends.permissions import allow_create_ticket, allow_read_ticket, \
-    allow_take_and_reject_ticket, only_creator, allow_assign_specialist, allow_ticket_management
+from tickets.permissions import allow_ticket_management
 from tickets.enums import TicketStatusChoice
 from tickets.models import Ticket, TicketFile
-from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, TicketFileSchemaReturn, AssignSpecialistSchema, \
+from tickets.schemas import TicketSchemaReturn, TicketSchemaCreate, AssignSpecialistSchema, \
     GradeSchema
 from tickets.ticket_files import _delete_file
 from datetime import datetime
 
-ticket_router = InferringRouter(tags=["Ticket"])
+ticket_router = InferringRouter(tags=["Ticket"], dependencies=[Depends(allow_ticket_management)])
 ROUTE = "/api/tickets"
 
 
@@ -36,8 +35,6 @@ class TicketView(BaseHandler):
 
     @ticket_router.post(f"{ROUTE}/", response_model=TicketSchemaReturn, status_code=201)
     async def create_item(self, ticket_object: TicketSchemaCreate, request: Request):
-        await allow_ticket_management(request, self.session, "create")
-
         ticket_dict = ticket_object.dict()
         answers_data = ticket_dict.pop("answers")
         files_data = ticket_dict.pop("ticket_files")
@@ -65,18 +62,14 @@ class TicketView(BaseHandler):
 
     @ticket_router.get(f"{ROUTE}/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def read_ticket(self, ticket_id: int, request: Request):
-        await allow_ticket_management(request, self.session, "read")
         return await self._get_ticket(ticket_id)
 
     @ticket_router.delete(f"{ROUTE}/" + "{ticket_id}", status_code=204)
     async def delete_ticket(self, ticket_id: int, request: Request):
-        await allow_ticket_management(request, self.session, "only_creator")
         return await self.delete(self.session, ticket_id)
 
     @ticket_router.put(f"{ROUTE}/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def update_ticket(self, ticket_id: int, ticket: TicketSchemaReturn, request: Request):
-        await allow_ticket_management(request, self.session, "only_creator")
-
         ticket_dict = ticket.dict()
         ticket_dict.pop("creator")
         answers = ticket_dict.pop("answers")
@@ -106,21 +99,16 @@ class TicketView(BaseHandler):
 
     @ticket_router.post(f"{ROUTE}/take_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def take_ticket(self, request: Request, ticket_id: int):
-        await allow_ticket_management(request, self.session, "take_or_reject_ticket")
         specialist = await self.get_obj(select(User), self.session, {"main_id": request.user.id})
         return await self._add_specialist_to_ticket(specialist, ticket_id)
 
     @ticket_router.post(f"{ROUTE}/assign_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def assign_specialist(self, ticket_id: int, specialist_id: AssignSpecialistSchema, request: Request):
-        await allow_ticket_management(request, self.session, "assign_specialist")
-
         specialist = await self.get_obj(select(User), self.session, {"id": specialist_id.id})
         return await self._add_specialist_to_ticket(specialist, ticket_id)
 
     @ticket_router.post(f"{ROUTE}/reject_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def reject_ticket(self, ticket_id: int, request: Request):
-        await allow_ticket_management(request, self.session, "take_or_reject_ticket")
-
         ticket: Ticket = await self._get_ticket(ticket_id)
         ticket.status = TicketStatusChoice.REJECTED
         await self.session.commit()
@@ -129,8 +117,6 @@ class TicketView(BaseHandler):
 
     @ticket_router.post(f"{ROUTE}/close_ticket/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def close_ticket(self, ticket_id: int, request: Request):
-        await only_creator(request, self.session)
-
         ticket: Ticket = await self._get_ticket(ticket_id)
         ticket.status = TicketStatusChoice.CLOSED
         await self.session.commit()
@@ -139,14 +125,12 @@ class TicketView(BaseHandler):
 
     @ticket_router.post(f"{ROUTE}/set_grade/" + "{ticket_id}", response_model=TicketSchemaReturn, status_code=200)
     async def set_grade(self, grade: GradeSchema, ticket_id: int, request: Request):
-        await only_creator(request, self.session)
 
         ticket: Ticket = await self._get_ticket(ticket_id)
         ticket.grade = grade.grade
         await self.session.commit()
         await self.session.refresh(ticket)
         return ticket
-
 
     async def _update_files(self,
                             files: List[TicketFile],
